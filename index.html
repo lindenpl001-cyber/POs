@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>点餐系统 · Staff Order</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;900&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#23201B;
+    --paper:#F5EFE1;
+    --paper-dark:#EAE1CC;
+    --amber:#DE9F3D;
+    --amber-dark:#B87F27;
+    --herb:#5C7A5C;
+    --ember:#B5432E;
+    --slate:#8B8474;
+    --slate-line:#D8D0BC;
+    --white:#FFFDF8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--ink);
+    color:var(--ink);
+    overflow:hidden;
+  }
+  .screen{display:none; height:100vh; width:100vw;}
+  .screen.active{display:flex;}
+
+  /* ================= LOGIN ================= */
+  #screen-login{
+    background:var(--ink);
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    gap:36px;
+  }
+  .login-brand{
+    text-align:center;
+    color:var(--paper);
+  }
+  .login-brand .mark{
+    font-family:'Fraunces',serif;
+    font-weight:900;
+    font-size:44px;
+    color:var(--amber);
+    letter-spacing:-1px;
+  }
+  .login-brand .sub{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:2px;
+    color:var(--slate);
+    margin-top:4px;
+    text-transform:uppercase;
+  }
+  .pin-panel{
+    background:#2E2A22;
+    border-radius:20px;
+    padding:32px 34px;
+    width:320px;
+  }
+  .pin-label{
+    color:var(--paper);
+    font-size:14px;
+    font-weight:600;
+    margin-bottom:12px;
+    text-align:center;
+  }
+  .pin-dots{
+    display:flex;
+    justify-content:center;
+    gap:14px;
+    margin-bottom:22px;
+  }
+  .pin-dot{
+    width:16px;height:16px;
+    border-radius:50%;
+    border:2px solid var(--slate);
+    transition:background .1s, border-color .1s;
+  }
+  .pin-dot.filled{background:var(--amber); border-color:var(--amber);}
+  .pin-dot.err{background:var(--ember); border-color:var(--ember);}
+  .pin-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:12px;
+  }
+  .pin-key{
+    aspect-ratio:1;
+    border-radius:50%;
+    border:none;
+    background:#3B362B;
+    color:var(--paper);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:22px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .pin-key:active{background:var(--amber); color:var(--ink);}
+  .pin-key.wide{border-radius:16px; font-size:14px; font-weight:700;}
+  .login-hint{
+    color:var(--slate);
+    font-size:12px;
+    font-family:'IBM Plex Mono',monospace;
+    text-align:center;
+  }
+
+  /* ================= HOME ================= */
+  #screen-home{
+    background:var(--paper);
+    flex-direction:column;
+  }
+  .home-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:22px 34px;
+    border-bottom:1.5px solid var(--slate-line);
+  }
+  .home-header .greet{
+    font-family:'Fraunces',serif;
+    font-size:24px;
+    font-weight:700;
+  }
+  .home-header .greet span{color:var(--amber-dark);}
+  .home-header .clock{
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--slate);
+    font-size:13px;
+  }
+  .logout-btn{
+    background:none; border:1.5px solid var(--slate-line);
+    border-radius:8px; padding:8px 14px;
+    font-size:12.5px; font-weight:600; color:var(--ember);
+    cursor:pointer; margin-left:16px;
+  }
+  .simcall-btn{
+    background:none; border:1.5px dashed var(--slate-line);
+    border-radius:8px; padding:8px 14px;
+    font-size:12px; font-weight:600; color:var(--slate);
+    cursor:pointer; margin-left:10px;
+  }
+
+  /* ================= CALLER ID BANNER ================= */
+  .callerid-banner{
+    position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-140%);
+    z-index:60; width:380px;
+    background:var(--ink); color:var(--paper);
+    border-radius:16px; padding:16px 18px;
+    box-shadow:0 12px 30px rgba(0,0,0,.35);
+    display:flex; align-items:center; gap:14px;
+    transition:transform .35s cubic-bezier(.2,.9,.3,1.2);
+  }
+  .callerid-banner.show{transform:translateX(-50%) translateY(0);}
+  .callerid-banner .ci-icon{
+    font-size:26px; flex-shrink:0;
+    animation:ring 1s infinite;
+  }
+  @keyframes ring{
+    0%,100%{transform:rotate(0);} 25%{transform:rotate(-12deg);} 75%{transform:rotate(12deg);}
+  }
+  .callerid-banner .ci-body{flex:1; min-width:0;}
+  .callerid-banner .ci-num{
+    font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--amber);
+  }
+  .callerid-banner .ci-name{font-family:'Fraunces',serif; font-weight:700; font-size:16px; margin-top:2px;}
+  .callerid-banner .ci-sub{font-size:11.5px; color:var(--slate); margin-top:2px;}
+  .callerid-banner .ci-actions{display:flex; flex-direction:column; gap:6px;}
+  .callerid-banner button{
+    border:none; border-radius:8px; padding:7px 12px;
+    font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap;
+  }
+  .ci-answer{background:var(--herb); color:white;}
+  .ci-dismiss{background:#3B362B; color:var(--slate);}
+
+  .customer-hint{
+    margin-top:-8px; margin-bottom:16px; padding:10px 12px;
+    background:#EFE9D8; border:1px solid var(--amber); border-radius:10px;
+    font-size:12.5px; display:none; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .customer-hint.show{display:flex;}
+  .customer-hint .ch-text b{color:var(--amber-dark);}
+  .customer-hint button{
+    background:var(--ink); color:var(--paper); border:none; border-radius:7px;
+    padding:6px 10px; font-size:11.5px; font-weight:700; cursor:pointer; white-space:nowrap;
+  }
+  .home-grid{
+    flex:1;
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    grid-template-rows:repeat(3, 1fr);
+    gap:20px;
+    padding:32px 80px;
+  }
+  .home-tile{
+    background:var(--white);
+    border:1.5px solid var(--slate-line);
+    border-radius:20px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    cursor:pointer;
+    transition:transform .1s, border-color .15s;
+  }
+  .home-tile:active{transform:scale(.97);}
+  .home-tile .icon{font-size:40px;}
+  .home-tile .label{
+    font-family:'Inter',sans-serif;
+    font-weight:700;
+    font-size:17px;
+  }
+  .home-tile .label-en{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--slate);
+    letter-spacing:.5px;
+  }
+  .home-tile.accent{background:var(--ink); border-color:var(--ink);}
+  .home-tile.accent .label, .home-tile.accent .label-en{color:var(--paper);}
+
+  /* ================= TABLE SELECT ================= */
+  #screen-tables{
+    background:var(--paper);
+    flex-direction:column;
+  }
+  .subpage-header{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    padding:22px 34px;
+    border-bottom:1.5px solid var(--slate-line);
+  }
+  .back-btn{
+    background:var(--white); border:1.5px solid var(--slate-line);
+    border-radius:10px; padding:10px 16px;
+    font-weight:700; font-size:14px; cursor:pointer;
+  }
+  .subpage-header h1{
+    font-family:'Fraunces',serif; font-size:22px; font-weight:700;
+  }
+  .table-grid{
+    flex:1;
+    display:grid;
+    grid-template-columns:repeat(6, 1fr);
+    gap:16px;
+    padding:28px 40px;
+    overflow-y:auto;
+    align-content:start;
+  }
+  .table-btn{
+    aspect-ratio:1;
+    background:var(--white);
+    border:1.5px solid var(--slate-line);
+    border-radius:16px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .table-btn .tnum{font-size:24px; font-weight:700;}
+  .table-btn .tstatus{font-size:10px; color:var(--herb); text-transform:uppercase; letter-spacing:1px;}
+  .table-btn.occupied{background:#F3E3DC; border-color:var(--ember);}
+  .table-btn.occupied .tstatus{color:var(--ember);}
+  .table-btn:active{transform:scale(.96);}
+
+  /* ================= CUSTOMER FORM ================= */
+  #screen-customer{
+    background:var(--paper);
+    flex-direction:column;
+    align-items:center;
+  }
+  .form-wrap{
+    width:420px;
+    margin-top:40px;
+    background:var(--white);
+    border:1.5px solid var(--slate-line);
+    border-radius:20px;
+    padding:32px;
+  }
+  .form-wrap h2{
+    font-family:'Fraunces',serif; font-size:22px; margin-bottom:20px;
+  }
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block; font-size:12.5px; font-weight:700; color:var(--slate);
+    margin-bottom:6px; text-transform:uppercase; letter-spacing:.5px;
+  }
+  .field input{
+    width:100%; padding:13px 14px;
+    border:1.5px solid var(--slate-line); border-radius:10px;
+    font-size:15px; font-family:'Inter',sans-serif;
+    background:var(--paper);
+  }
+  .form-submit{
+    width:100%; margin-top:8px;
+    background:var(--ink); color:var(--paper);
+    border:none; border-radius:10px; padding:15px;
+    font-weight:700; font-size:15px; cursor:pointer;
+  }
+
+  /* ================= RECALL ================= */
+  #screen-recall{background:var(--paper); flex-direction:column;}
+  .recall-list{
+    flex:1; overflow-y:auto; padding:20px 40px; display:flex; flex-direction:column; gap:12px;
+  }
+  .recall-item{
+    background:var(--white); border:1.5px solid var(--slate-line); border-radius:14px;
+    padding:16px 20px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;
+  }
+  .recall-item .ri-main{font-weight:700; font-size:15px;}
+  .recall-item .ri-sub{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--slate); margin-top:3px;}
+  .recall-item .ri-total{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--amber-dark);}
+  .recall-empty{color:var(--slate); text-align:center; margin-top:60px; font-size:14px;}
+
+  /* ================= ORDER SCREEN ================= */
+  #screen-order{
+    display:none;
+    height:100vh; width:100vw;
+  }
+  #screen-order.active{display:grid;}
+  /* Layout "top": ticket left · categories horizontal bar on top · items below */
+  #screen-order.layout-top{
+    grid-template-columns:380px 1fr;
+    grid-template-rows:auto 1fr;
+    grid-template-areas:"ticket rail" "ticket menu";
+  }
+  /* Layout "right": ticket left · items in middle · categories vertical rail on the right */
+  #screen-order.layout-right{
+    grid-template-columns:380px 1fr 96px;
+    grid-template-rows:1fr;
+    grid-template-areas:"ticket menu rail";
+  }
+  .rail{
+    grid-area:rail;
+    background:var(--ink); display:flex; flex-direction:column; align-items:center;
+    padding:16px 0; gap:6px; overflow-y:auto;
+  }
+  #screen-order.layout-top .rail{
+    flex-direction:row; align-items:center; padding:12px 20px; gap:8px;
+    overflow-x:auto; overflow-y:hidden;
+  }
+  .rail-back{
+    width:76px; padding:10px 4px; background:transparent; border:none; border-radius:12px;
+    color:var(--amber); font-weight:700; font-size:11px; cursor:pointer; margin-bottom:10px;
+    flex-shrink:0;
+  }
+  #screen-order.layout-top .rail-back{width:auto; margin-bottom:0; padding:10px 14px;}
+  .cat-btn{
+    width:76px; padding:12px 4px; background:transparent; border:none; border-radius:12px;
+    color:#B8AE96; font-family:'Inter',sans-serif; font-weight:600; font-size:11.5px;
+    display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer;
+    flex-shrink:0;
+  }
+  #screen-order.layout-top .cat-btn{
+    width:auto; flex-direction:row; padding:10px 16px; white-space:nowrap; border-radius:20px;
+  }
+  .cat-btn .dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.55;}
+  .cat-btn.active{background:var(--amber); color:var(--ink);}
+  .cat-btn.active .dot{opacity:1;}
+
+  .menu{grid-area:menu; background:var(--paper); padding:20px 24px 24px; overflow-y:auto;}
+  .menu-header{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px;}
+  .menu-header h1{font-family:'Fraunces',serif; font-weight:700; font-size:24px;}
+  .order-context{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--slate);
+    background:var(--white); border:1px solid var(--slate-line); border-radius:8px; padding:6px 12px;
+  }
+  .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(138px, 1fr)); gap:10px;}
+  .item-card{
+    background:var(--white); border:1.5px solid var(--slate-line); border-radius:14px; padding:12px 11px;
+    text-align:left; cursor:pointer; display:flex; flex-direction:column; gap:8px; min-height:84px;
+  }
+  .item-card:active{transform:scale(.97); border-color:var(--amber);}
+  .item-name{font-weight:700; font-size:13.5px; line-height:1.25;}
+  .item-price{font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--amber-dark); font-weight:600; margin-top:auto;}
+
+  .ticket-wrap{grid-area:ticket; background:#DCD3BA; display:flex; flex-direction:column; padding:16px 14px;}
+  .ticket{
+    background:var(--white); border-radius:6px; flex:1; display:flex; flex-direction:column;
+    overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,.18); position:relative;
+  }
+  .ticket::before{
+    content:""; position:absolute; top:0; left:0; right:0; height:8px;
+    background-image:radial-gradient(circle at 8px 4px, #DCD3BA 4px, transparent 4.5px);
+    background-size:16px 8px; background-repeat:repeat-x;
+  }
+  .ticket-head{padding:18px 16px 10px; border-bottom:1.5px dashed var(--slate-line);}
+  .ticket-head .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:1.5px; color:var(--slate); text-transform:uppercase;}
+  .ticket-head h2{font-family:'Fraunces',serif; font-size:19px; font-weight:700; margin-top:3px;}
+  .ticket-head .ctx-detail{font-size:11.5px; color:var(--slate); margin-top:4px;}
+  .ticket-body{flex:1; overflow-y:auto; padding:6px 16px;}
+  .empty-state{height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--slate); text-align:center; padding:20px; gap:6px;}
+  .empty-state .big{font-family:'Fraunces',serif; font-size:16px; color:var(--ink); font-weight:600;}
+  .line{display:flex; align-items:flex-start; gap:9px; padding:11px 0; border-bottom:1px solid #EFEAE0;}
+  .qty-stepper{display:flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace;}
+  .qty-stepper button{width:22px;height:22px; border-radius:6px; border:1.5px solid var(--slate-line); background:var(--paper); font-size:13px; font-weight:700; cursor:pointer;}
+  .qty-stepper span{width:14px; text-align:center; font-weight:600; font-size:12.5px;}
+  .line-main{flex:1;}
+  .line-name{font-weight:700; font-size:13.5px;}
+  .line-note{font-size:11.5px; color:var(--ember); margin-top:2px; font-style:italic;}
+  .line-price{font-family:'IBM Plex Mono',monospace; font-size:12.5px; font-weight:600; color:var(--slate); white-space:nowrap;}
+  .line-remove{background:none;border:none;color:var(--slate); font-size:15px; cursor:pointer; padding:2px 3px;}
+  .note-input{width:100%; margin-top:5px; font-size:11.5px; border:1px solid var(--slate-line); border-radius:6px; padding:5px 7px; background:var(--paper);}
+  .ticket-totals{padding:12px 16px; border-top:1.5px dashed var(--slate-line); font-family:'IBM Plex Mono',monospace; font-size:12.5px;}
+  .totals-row{display:flex; justify-content:space-between; padding:2px 0; color:var(--slate);}
+  .totals-row.grand{color:var(--ink); font-weight:700; font-size:15px; padding-top:6px;}
+  .ticket-actions{padding:12px 16px 16px; display:flex; flex-direction:column; gap:7px;}
+  .btn{border:none; border-radius:10px; padding:13px; font-weight:700; font-size:13.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;}
+  .btn:active{transform:scale(.98);}
+  .btn-fire{background:var(--ink); color:var(--paper);}
+  .btn-fire:disabled{background:var(--slate-line); color:var(--slate); cursor:not-allowed;}
+  .btn-pay{background:var(--herb); color:var(--white);}
+  .btn-pay:disabled{background:var(--slate-line); color:var(--slate); cursor:not-allowed;}
+  .btn-print{background:transparent; color:var(--ink); border:1.5px solid var(--slate-line);}
+  .btn-hold{background:transparent; color:var(--amber-dark); border:1.5px solid var(--amber);}
+  .btn-new{background:transparent; color:var(--ember); border:1.5px solid var(--ember);}
+  .status-banner{margin:0 16px 10px; padding:9px 12px; border-radius:8px; font-size:12px; font-weight:600; display:none; align-items:center; gap:6px;}
+  .status-banner.show{display:flex;}
+  .status-fired{background:#EFE3C4; color:var(--amber-dark);}
+  .status-paid{background:#E3EBE3; color:var(--herb);}
+
+  /* ================= MODAL ================= */
+  .modal-overlay{position:fixed; inset:0; background:rgba(35,32,27,.55); display:none; align-items:center; justify-content:center; z-index:50;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--white); border-radius:16px; padding:28px 26px; width:320px; text-align:center;}
+  .modal h3{font-family:'Fraunces',serif; font-size:20px; margin-bottom:8px;}
+  .modal p{font-size:13.5px; color:var(--slate); margin-bottom:20px; line-height:1.5;}
+  .modal .spinner{width:34px; height:34px; margin:0 auto 16px; border:3px solid var(--slate-line); border-top-color:var(--herb); border-radius:50%; animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .modal .checkmark{width:48px; height:48px; margin:0 auto 14px; border-radius:50%; background:var(--herb); display:flex; align-items:center; justify-content:center; color:white; font-size:24px;}
+  .modal .drawer-icon{font-size:40px; margin-bottom:10px;}
+  .modal-close{margin-top:4px; background:var(--ink); color:var(--paper); border:none; border-radius:10px; padding:11px 18px; font-weight:700; font-size:13.5px; cursor:pointer; width:100%;}
+
+  #printTicket{display:none;}
+  @media print{
+    body *{visibility:hidden;}
+    #printTicket, #printTicket *{visibility:visible;}
+    #printTicket{display:block; position:absolute; top:0; left:0; width:280px; font-family:'IBM Plex Mono',monospace; padding:10px;}
+    #printTicket h2{font-size:16px; margin-bottom:6px; text-align:center;}
+    #printTicket .pt-row{display:flex; justify-content:space-between; font-size:12px; margin:3px 0;}
+    #printTicket hr{border:none; border-top:1px dashed #000; margin:8px 0;}
+  }
+
+  /* ================= ADMIN ================= */
+  #screen-admin{background:var(--paper); flex-direction:row;}
+  .admin-nav{
+    width:200px; background:var(--ink); padding:20px 0; display:flex; flex-direction:column; flex-shrink:0;
+  }
+  .admin-nav .an-title{color:var(--amber); font-family:'Fraunces',serif; font-weight:700; font-size:17px; padding:0 20px 18px;}
+  .admin-tab{
+    text-align:left; background:none; border:none; color:#B8AE96; padding:13px 20px;
+    font-size:13.5px; font-weight:600; cursor:pointer; border-left:3px solid transparent;
+  }
+  .admin-tab.active{background:#2E2A22; color:var(--amber); border-left-color:var(--amber);}
+  .admin-nav .an-exit{margin-top:auto; padding:13px 20px; color:var(--ember); font-weight:700; font-size:13px; background:none; border:none; text-align:left; cursor:pointer;}
+  .admin-body{flex:1; padding:26px 34px; overflow-y:auto;}
+  .admin-body h2{font-family:'Fraunces',serif; font-size:24px; margin-bottom:18px;}
+  .admin-section{margin-bottom:28px;}
+  .admin-section h3{font-size:13px; text-transform:uppercase; letter-spacing:.5px; color:var(--slate); margin-bottom:10px; font-weight:700;}
+
+  .stat-row{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px;}
+  .stat-card{background:var(--white); border:1.5px solid var(--slate-line); border-radius:14px; padding:18px 20px;}
+  .stat-card .sc-label{font-size:11.5px; color:var(--slate); text-transform:uppercase; letter-spacing:.5px; font-weight:700;}
+  .stat-card .sc-val{font-family:'IBM Plex Mono',monospace; font-size:26px; font-weight:700; margin-top:6px;}
+
+  .bar-row{display:flex; align-items:center; gap:12px; padding:8px 0;}
+  .bar-row .br-name{width:220px; font-size:13px; font-weight:600; flex-shrink:0;}
+  .bar-row .br-track{flex:1; height:10px; background:var(--paper-dark); border-radius:6px; overflow:hidden;}
+  .bar-row .br-fill{height:100%; background:var(--amber);}
+  .bar-row .br-qty{width:56px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--slate);}
+
+  .admin-table{width:100%; border-collapse:collapse; background:var(--white); border:1.5px solid var(--slate-line); border-radius:12px; overflow:hidden;}
+  .admin-table th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--slate); background:var(--paper-dark); padding:10px 14px;}
+  .admin-table td{padding:10px 14px; font-size:13.5px; border-top:1px solid #EFEAE0;}
+  .admin-table input, .admin-table select{
+    border:1.5px solid var(--slate-line); border-radius:7px; padding:6px 8px; font-size:13px; font-family:'IBM Plex Mono',monospace; width:100%;
+  }
+  .row-del{background:none; border:none; color:var(--ember); font-size:15px; cursor:pointer;}
+  .admin-add-form{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; align-items:center;}
+  .admin-add-form input, .admin-add-form select{
+    border:1.5px solid var(--slate-line); border-radius:8px; padding:9px 11px; font-size:13px; font-family:'Inter',sans-serif;
+  }
+  .admin-add-form input[type=text]{flex:1; min-width:140px;}
+  .admin-btn{background:var(--ink); color:var(--paper); border:none; border-radius:8px; padding:9px 16px; font-weight:700; font-size:13px; cursor:pointer;}
+  .admin-btn.save{background:var(--herb); color:white;}
+
+  .history-row{background:var(--white); border:1.5px solid var(--slate-line); border-radius:12px; padding:14px 18px; margin-bottom:10px; cursor:pointer;}
+  .history-row .hr-top{display:flex; justify-content:space-between; align-items:center;}
+  .history-row .hr-label{font-weight:700; font-size:14px;}
+  .history-row .hr-time{font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--slate);}
+  .history-row .hr-total{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--amber-dark);}
+  .history-row .hr-items{margin-top:10px; padding-top:10px; border-top:1px dashed var(--slate-line); font-size:12.5px; color:var(--slate); display:none;}
+  .history-row.expanded .hr-items{display:block;}
+  .history-empty{color:var(--slate); text-align:center; margin-top:40px; font-size:14px;}
+
+  .settings-form{background:var(--white); border:1.5px solid var(--slate-line); border-radius:14px; padding:22px; max-width:480px;}
+  .settings-form .field{margin-bottom:14px;}
+  .settings-note{font-size:11.5px; color:var(--slate); margin-top:-8px; margin-bottom:14px; line-height:1.5;}
+  .save-toast{display:none; background:#E3EBE3; color:var(--herb); border-radius:8px; padding:9px 12px; font-size:12.5px; font-weight:600; margin-top:10px;}
+  .save-toast.show{display:block;}
+
+  .layout-picker{display:flex; gap:16px; margin-bottom:10px;}
+  .layout-card{
+    background:var(--white); border:2px solid var(--slate-line); border-radius:14px;
+    padding:14px; width:220px; cursor:pointer; transition:border-color .15s;
+  }
+  .layout-card.selected{border-color:var(--amber);}
+  .lc-diagram{
+    display:grid; height:120px; border-radius:8px; overflow:hidden;
+    background:#EFE9D8; padding:4px; gap:4px;
+  }
+  .lc-diagram.lc-top{grid-template-columns:38px 1fr; grid-template-rows:24px 1fr;}
+  .lc-diagram.lc-top .lc-ticket{grid-row:1/3;}
+  .lc-diagram.lc-right{grid-template-columns:38px 1fr 18px; grid-template-rows:1fr;}
+  .lc-ticket{
+    background:var(--ink); color:var(--paper); border-radius:5px; font-size:8.5px;
+    display:flex; align-items:center; justify-content:center; text-align:center; line-height:1.2;
+  }
+  .lc-cats{
+    background:var(--amber); border-radius:5px; font-size:8px; color:var(--ink); font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .lc-items{
+    background:var(--white); border:1px dashed var(--slate-line); border-radius:5px; font-size:8px; color:var(--slate);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .lc-cats-v{
+    background:var(--amber); border-radius:5px; font-size:7.5px; color:var(--ink); font-weight:700;
+    display:flex; align-items:center; justify-content:center; text-align:center; line-height:1.2;
+  }
+  .lc-label{font-size:12px; font-weight:600; margin-top:10px; text-align:center;}
+
+  .pin-gate-pad{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px;}
+  .pin-gate-pad button{aspect-ratio:1; border-radius:50%; border:none; background:var(--paper); font-family:'IBM Plex Mono',monospace; font-size:18px; font-weight:600; cursor:pointer;}
+  .pin-gate-dots{display:flex; justify-content:center; gap:10px; margin:14px 0;}
+  .pin-gate-dots .pgd{width:12px;height:12px;border-radius:50%;border:2px solid var(--slate-line);}
+  .pin-gate-dots .pgd.filled{background:var(--amber); border-color:var(--amber);}
+
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--slate-line); border-radius:4px;}
+</style>
+</head>
+<body>
+
+<!-- Caller ID incoming call banner -->
+<div class="callerid-banner" id="calleridBanner">
+  <div class="ci-icon">📞</div>
+  <div class="ci-body">
+    <div class="ci-num" id="ciNum"></div>
+    <div class="ci-name" id="ciName"></div>
+    <div class="ci-sub" id="ciSub"></div>
+  </div>
+  <div class="ci-actions">
+    <button class="ci-answer" onclick="answerCall()">接听建单</button>
+    <button class="ci-dismiss" onclick="dismissCall()">忽略</button>
+  </div>
+</div>
+
+<!-- ============ LOGIN ============ -->
+<div class="screen active" id="screen-login">
+  <div class="login-brand">
+    <div class="mark">铺</div>
+    <div class="sub">Staff Terminal · 员工登录</div>
+  </div>
+  <div class="pin-panel">
+    <div class="pin-label" id="pinLabel">请输入密码 Enter your PIN</div>
+    <div class="pin-dots" id="pinDots"></div>
+    <div class="pin-grid" id="pinGrid"></div>
+  </div>
+  <div class="login-hint">演示账号：员工 1234 / 2345 / 3456 · 管理员 9999</div>
+</div>
+
+<!-- ============ HOME ============ -->
+<div class="screen" id="screen-home">
+  <div class="home-header">
+    <div>
+      <div class="greet">你好, <span id="staffName">Staff</span></div>
+    </div>
+    <div style="display:flex; align-items:center;">
+      <div class="clock" id="clockDisplay"></div>
+      <button class="simcall-btn" onclick="simulateIncomingCall()">☎ 模拟来电 Test Call</button>
+      <button class="simcall-btn" onclick="openAdminGate()">⚙ 管理后台 Admin</button>
+      <button class="logout-btn" onclick="logout()">登出 Logout</button>
+    </div>
+  </div>
+  <div class="home-grid">
+    <div class="home-tile accent" onclick="goTables()">
+      <div class="icon">🍽️</div>
+      <div class="label">堂食</div>
+      <div class="label-en">DINE IN</div>
+    </div>
+    <div class="home-tile" onclick="goCustomerForm('to-go')">
+      <div class="icon">🛍️</div>
+      <div class="label">外带</div>
+      <div class="label-en">TO GO</div>
+    </div>
+    <div class="home-tile" onclick="goCustomerForm('pickup')">
+      <div class="icon">📞</div>
+      <div class="label">自取</div>
+      <div class="label-en">PICK UP</div>
+    </div>
+    <div class="home-tile" onclick="goCustomerForm('delivery')">
+      <div class="icon">🛵</div>
+      <div class="label">外送</div>
+      <div class="label-en">DELIVERY</div>
+    </div>
+    <div class="home-tile" onclick="goRecall()">
+      <div class="icon">🗂️</div>
+      <div class="label">调出订单</div>
+      <div class="label-en">RECALL</div>
+    </div>
+    <div class="home-tile" onclick="openDrawer()">
+      <div class="icon">🗄️</div>
+      <div class="label">打开钱箱</div>
+      <div class="label-en">OPEN DRAWER</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TABLE SELECT ============ -->
+<div class="screen" id="screen-tables">
+  <div class="subpage-header">
+    <button class="back-btn" onclick="goHome()">← 返回 Back</button>
+    <h1>选择桌号 Select Table</h1>
+  </div>
+  <div class="table-grid" id="tableGrid"></div>
+</div>
+
+<!-- ============ CUSTOMER FORM ============ -->
+<div class="screen" id="screen-customer">
+  <div class="subpage-header" style="width:100%;">
+    <button class="back-btn" onclick="goHome()">← 返回 Back</button>
+    <h1 id="customerFormTitle">顾客信息 Customer Info</h1>
+  </div>
+  <div class="form-wrap">
+    <h2 id="customerFormSubtitle">填写顾客信息</h2>
+    <div class="field">
+      <label>顾客姓名 Name</label>
+      <input type="text" id="custName" placeholder="e.g. John Smith">
+    </div>
+    <div class="field">
+      <label>电话号码 Phone</label>
+      <input type="tel" id="custPhone" placeholder="e.g. (555) 123-4567" oninput="lookupCustomer(this.value)">
+    </div>
+    <div class="customer-hint" id="customerHint">
+      <div class="ch-text">👤 老顾客 <b id="chName"></b> · <span id="chSub"></span></div>
+      <button onclick="applyCustomerHint()">使用 Use</button>
+    </div>
+    <div class="field" id="addressField" style="display:none;">
+      <label>送餐地址 Delivery Address</label>
+      <input type="text" id="custAddress" placeholder="e.g. 123 Main St, Apt 4B">
+    </div>
+    <button class="form-submit" onclick="startOrderFromForm()">开始点餐 Start Order →</button>
+  </div>
+</div>
+
+<!-- ============ RECALL ============ -->
+<div class="screen" id="screen-recall">
+  <div class="subpage-header">
+    <button class="back-btn" onclick="goHome()">← 返回 Back</button>
+    <h1>调出订单 Recall Orders</h1>
+  </div>
+  <div class="recall-list" id="recallList"></div>
+</div>
+
+<!-- ============ ORDER SCREEN ============ -->
+<div class="screen" id="screen-order">
+  <div class="rail" id="rail">
+    <button class="rail-back" onclick="exitOrderToHome()">← 首页</button>
+  </div>
+  <div class="menu">
+    <div class="menu-header">
+      <h1 id="catTitle"></h1>
+      <div class="order-context" id="orderContext"></div>
+    </div>
+    <div class="grid" id="menuGrid"></div>
+  </div>
+  <div class="ticket-wrap">
+    <div class="ticket">
+      <div class="ticket-head">
+        <div class="eyebrow" id="ticketNo">ORDER · 待下单</div>
+        <h2 id="ticketTitle">新订单</h2>
+        <div class="ctx-detail" id="ticketCtxDetail"></div>
+      </div>
+      <div class="status-banner" id="statusBanner"></div>
+      <div class="ticket-body" id="ticketBody"></div>
+      <div class="ticket-totals">
+        <div class="totals-row"><span>小计 Subtotal</span><span id="subtotal">$0.00</span></div>
+        <div class="totals-row"><span>税 Tax (8%)</span><span id="tax">$0.00</span></div>
+        <div class="totals-row grand"><span>总计 Total</span><span id="total">$0.00</span></div>
+      </div>
+      <div class="ticket-actions">
+        <button class="btn btn-fire" id="fireBtn">🔥 送到厨房 Send to Kitchen</button>
+        <button class="btn btn-print" id="printBtn" disabled>🖨️ 打印小票 Print Ticket</button>
+        <button class="btn btn-pay" id="payBtn" disabled>💳 刷卡结账 Charge Card</button>
+        <button class="btn btn-hold" id="holdBtn">⏸ 暂存订单 Hold Order</button>
+        <button class="btn btn-new" id="newBtn" style="display:none;">＋ 新订单 New Order</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ADMIN ============ -->
+<div class="screen" id="screen-admin">
+  <div class="admin-nav">
+    <div class="an-title">⚙ 管理后台</div>
+    <button class="admin-tab" data-tab="menu" onclick="switchAdminTab('menu')">🍜 菜单管理 Menu</button>
+    <button class="admin-tab" data-tab="reports" onclick="switchAdminTab('reports')">📊 销售报表 Reports</button>
+    <button class="admin-tab" data-tab="staff" onclick="switchAdminTab('staff')">👤 员工账号 Staff</button>
+    <button class="admin-tab" data-tab="history" onclick="switchAdminTab('history')">🧾 历史订单 Orders</button>
+    <button class="admin-tab" data-tab="settings" onclick="switchAdminTab('settings')">🖨 打印/刷卡设置</button>
+    <button class="an-exit" onclick="goHome()">← 退出后台</button>
+  </div>
+  <div class="admin-body" id="adminBody"></div>
+</div>
+
+<!-- Admin PIN gate -->
+<div class="modal-overlay" id="adminGateOverlay">
+  <div class="modal">
+    <h3>管理员验证</h3>
+    <p>请输入管理员密码进入后台 · Manager PIN required</p>
+    <div class="pin-gate-dots" id="adminGateDots"></div>
+    <div class="pin-gate-pad" id="adminGatePad"></div>
+    <button class="modal-close" style="margin-top:14px; background:transparent; color:var(--ember); border:1.5px solid var(--ember);" onclick="closeAdminGate()">取消 Cancel</button>
+  </div>
+</div>
+
+<!-- Payment / info modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<!-- Hidden print-only kitchen ticket -->
+<div id="printTicket">
+  <h2 id="pt-heading"></h2>
+  <div class="pt-row"><span id="pt-time"></span><span id="pt-order"></span></div>
+  <hr>
+  <div id="pt-items"></div>
+  <hr>
+  <div class="pt-row"><strong>合计 Total</strong><strong id="pt-total"></strong></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+/* ===================== SUPABASE ===================== */
+const SUPABASE_URL = "https://kqeraivpbujrbrqoxkwr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_vdTZhNREQ8_cZd_mr4LKlw_Ny5kfQsq"; // publishable key — safe for browser use, protected by RLS
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ===================== MENU DATA (loaded from Supabase) ===================== */
+let MENU = {};          // { "开胃菜 Appetizers": [{id, name, price}, ...], ... }
+let categoryIds = {};   // { "开胃菜 Appetizers": uuid }
+
+/* ===================== STATE ===================== */
+let pinBuffer = "";
+let staffName = "";
+let currentRole = "staff"; // 'staff' | 'manager'
+let currentCat = "";
+let order = [];
+let orderStatus = "open"; // open -> fired -> paid
+let orderMeta = null; // {type, table, name, phone, address}
+let orderCounter = 1024;
+let currentOrderNo = null;
+let idSeq = 0;
+let parkedOrders = [];
+let completedOrders = []; // local cache; source of truth is the `orders` table
+
+/* Staff accounts — loaded from Supabase `staff` table. */
+let staffAccounts = [];
+
+/* Hardware settings — loaded from Supabase `settings` table. */
+let hardwareSettings = {
+  printerName:"Epson TM-T88VI", printerConn:"network", paperWidth:"80",
+  squareLocationId:"", squareDeviceId:"", squareAccessToken:""
+};
+
+/* Order screen layout — switchable in Admin ▸ Settings. */
+let appSettings = { orderLayout: "top" }; // 'top' | 'right'
+function applyOrderLayout(){
+  const el = document.getElementById('screen-order');
+  el.classList.remove('layout-top','layout-right');
+  el.classList.add('layout-' + appSettings.orderLayout);
+}
+
+/* ===================== CALLER ID / CUSTOMER HISTORY =====================
+   In production this data comes from your VoIP provider's webhook (e.g. RingCentral,
+   Ooma, Grasshopper) firing on incoming call, or a caller-ID box on a landline.
+   Here it's simulated with an in-memory lookup table seeded with demo customers. */
+let customerHistory = {
+  "5551234567": {name:"Wei Chen", phone:"(555) 123-4567", address:"88 Maple St, Apt 2", type:"delivery",
+    lastOrder:[{name:"Kung Pao Chicken 宫保鸡丁",price:14.90,qty:1,note:""},{name:"Vegetable Fried Rice 素炒饭",price:10.50,qty:1,note:""}], orderCount:5},
+  "5559876543": {name:"Sara Kim", phone:"(555) 987-6543", address:"", type:"pickup",
+    lastOrder:[{name:"Beef Chow Fun 干炒牛河",price:15.50,qty:2,note:""}], orderCount:2},
+  "5554567890": {name:"Alex Ramirez", phone:"(555) 456-7890", address:"210 Oak Ave", type:"delivery",
+    lastOrder:[{name:"General Tso's Chicken 左宗棠鸡",price:14.90,qty:1,note:""},{name:"Egg Drop Soup 蛋花汤",price:4.50,qty:2,note:""}], orderCount:9},
+};
+function normalizePhone(p){ return (p||'').replace(/\D/g,''); }
+function lookupCustomer(raw){
+  const key = normalizePhone(raw);
+  const hint = document.getElementById('customerHint');
+  if(key.length>=7 && customerHistory[key]){
+    const c = customerHistory[key];
+    document.getElementById('chName').textContent = c.name;
+    document.getElementById('chSub').textContent = `上次点过 ${c.lastOrder.length} 项 · 共 ${c.orderCount} 次`;
+    hint.classList.add('show');
+    hint._match = c;
+  } else {
+    hint.classList.remove('show');
+  }
+}
+function applyCustomerHint(){
+  const hint = document.getElementById('customerHint');
+  const c = hint._match;
+  if(!c) return;
+  document.getElementById('custName').value = c.name;
+  if(c.address) document.getElementById('custAddress').value = c.address;
+}
+function saveCustomerHistory(meta, items){
+  if(!meta || meta.type==='dine-in') return;
+  const key = normalizePhone(meta.phone);
+  if(key.length<7) return;
+  const existing = customerHistory[key];
+  const record = {
+    name: meta.name, phone: meta.phone, address: meta.address||'', type: meta.type,
+    lastOrder: items, orderCount: (existing?existing.orderCount:0)+1
+  };
+  customerHistory[key] = record;
+  db.from('customers').upsert({
+    phone: key, name: meta.name, address: meta.address||'',
+    preferred_type: meta.type, order_count: record.orderCount, last_order_at: new Date().toISOString()
+  }).then(({error})=>{ if(error) console.error('saveCustomerHistory error', error); });
+}
+async function loadCustomersFromDB(){
+  const {data, error} = await db.from('customers').select('*');
+  if(error){ console.error('loadCustomersFromDB error', error); return; }
+  data.forEach(c=>{
+    customerHistory[c.phone] = {
+      name: c.name, phone: formatPhone(c.phone), address: c.address||'', type: c.preferred_type||'pickup',
+      lastOrder: [], orderCount: c.order_count||0
+    };
+  });
+}
+
+/* ---- Simulated incoming call (demo). In production, replace this trigger
+   with your VoIP webhook / caller-ID hardware event. ---- */
+const DEMO_CALL_NUMBERS = ["5551234567","5559876543","5554567890","5551112222"];
+let pendingCall = null;
+function simulateIncomingCall(){
+  const num = DEMO_CALL_NUMBERS[Math.floor(Math.random()*DEMO_CALL_NUMBERS.length)];
+  const c = customerHistory[num];
+  pendingCall = {number: num, customer: c || null};
+  document.getElementById('ciNum').textContent = formatPhone(num);
+  if(c){
+    document.getElementById('ciName').textContent = c.name;
+    document.getElementById('ciSub').textContent = `老顾客 · 共下单 ${c.orderCount} 次`;
+  } else {
+    document.getElementById('ciName').textContent = '新号码 New Caller';
+    document.getElementById('ciSub').textContent = '未找到历史订单';
+  }
+  document.getElementById('calleridBanner').classList.add('show');
+}
+function formatPhone(digits){
+  if(digits.length!==10) return digits;
+  return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+}
+function dismissCall(){
+  document.getElementById('calleridBanner').classList.remove('show');
+  pendingCall = null;
+}
+function answerCall(){
+  if(!pendingCall) return;
+  const c = pendingCall.customer;
+  const type = (c && c.type) ? c.type : 'pickup';
+  document.getElementById('calleridBanner').classList.remove('show');
+  goCustomerForm(type);
+  document.getElementById('custPhone').value = formatPhone(pendingCall.number);
+  if(c){
+    document.getElementById('custName').value = c.name;
+    if(c.address) document.getElementById('custAddress').value = c.address;
+  }
+  lookupCustomer(pendingCall.number);
+  pendingCall = null;
+}
+
+/* ===================== SCREEN NAV ===================== */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ===================== LOGIN ===================== */
+function renderPinGrid(){
+  const grid = document.getElementById('pinGrid');
+  grid.innerHTML = '';
+  const keys = ['1','2','3','4','5','6','7','8','9','clear','0','ok'];
+  keys.forEach(k=>{
+    const btn = document.createElement('button');
+    if(k==='clear'){ btn.className='pin-key wide'; btn.textContent='C'; btn.onclick=()=>{pinBuffer='';renderPinDots();}; }
+    else if(k==='ok'){ btn.className='pin-key wide'; btn.textContent='OK'; btn.onclick=submitPin; }
+    else { btn.className='pin-key'; btn.textContent=k; btn.onclick=()=>pressDigit(k); }
+    grid.appendChild(btn);
+  });
+}
+function pressDigit(d){
+  if(pinBuffer.length>=4) return;
+  pinBuffer += d;
+  renderPinDots();
+  if(pinBuffer.length===4) setTimeout(submitPin, 150);
+}
+function renderPinDots(){
+  const wrap = document.getElementById('pinDots');
+  wrap.innerHTML='';
+  for(let i=0;i<4;i++){
+    const d = document.createElement('div');
+    d.className = 'pin-dot' + (i<pinBuffer.length ? ' filled':'');
+    wrap.appendChild(d);
+  }
+}
+function submitPin(){
+  if(pinBuffer.length!==4) return;
+  if(staffAccounts.length===0){
+    document.getElementById('pinLabel').textContent = '数据加载中，请稍候 Still loading...';
+    setTimeout(()=>{ pinBuffer=''; renderPinDots(); document.getElementById('pinLabel').textContent = '请输入密码 Enter your PIN'; }, 800);
+    return;
+  }
+  const account = staffAccounts.find(a=>a.pin===pinBuffer);
+  if(!account){
+    document.getElementById('pinLabel').textContent = '密码不正确 PIN not found';
+    document.querySelectorAll('#pinDots .pin-dot').forEach(d=>d.classList.add('err'));
+    setTimeout(()=>{
+      pinBuffer='';
+      document.getElementById('pinLabel').textContent = '请输入密码 Enter your PIN';
+      renderPinDots();
+    }, 500);
+    return;
+  }
+  staffName = account.name;
+  currentRole = account.role;
+  document.getElementById('staffName').textContent = staffName;
+  pinBuffer='';
+  renderPinDots();
+  showScreen('screen-home');
+}
+function logout(){
+  pinBuffer='';
+  renderPinDots();
+  showScreen('screen-login');
+}
+
+/* ===================== HOME ===================== */
+function updateClock(){
+  const now = new Date();
+  document.getElementById('clockDisplay').textContent = now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) + ' · ' + now.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'});
+}
+setInterval(updateClock, 1000*30);
+
+function goHome(){ showScreen('screen-home'); }
+
+function openDrawer(){
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  overlay.classList.add('show');
+  content.innerHTML = `
+    <div class="drawer-icon">🗄️</div>
+    <h3>钱箱已打开</h3>
+    <p>Cash drawer opened. 请记得核对现金。</p>
+    <button class="modal-close" onclick="closeModal()">关闭 Close</button>
+  `;
+}
+
+/* ===================== TABLE SELECT ===================== */
+function goTables(){
+  const grid = document.getElementById('tableGrid');
+  grid.innerHTML = '';
+  const occupied = new Set(parkedOrders.filter(o=>o.type==='dine-in').map(o=>o.table));
+  for(let i=1;i<=24;i++){
+    const btn = document.createElement('div');
+    const isOcc = occupied.has(i);
+    btn.className = 'table-btn' + (isOcc?' occupied':'');
+    btn.innerHTML = `<div class="tnum">${i}</div><div class="tstatus">${isOcc?'占用中':'空闲'}</div>`;
+    btn.onclick = ()=>{
+      if(isOcc){
+        const parked = parkedOrders.find(o=>o.type==='dine-in' && o.table===i);
+        resumeParkedOrder(parked);
+      } else {
+        startNewOrder({type:'dine-in', table:i});
+      }
+    };
+    grid.appendChild(btn);
+  }
+  showScreen('screen-tables');
+}
+
+/* ===================== CUSTOMER FORM ===================== */
+let pendingOrderType = null;
+function goCustomerForm(type){
+  pendingOrderType = type;
+  const titles = {'to-go':'外带 To Go','pickup':'自取 Pick Up','delivery':'外送 Delivery'};
+  document.getElementById('customerFormTitle').textContent = titles[type];
+  document.getElementById('customerFormSubtitle').textContent = '填写顾客信息 · ' + titles[type];
+  document.getElementById('addressField').style.display = type==='delivery' ? 'block' : 'none';
+  document.getElementById('custName').value='';
+  document.getElementById('custPhone').value='';
+  document.getElementById('custAddress').value='';
+  document.getElementById('customerHint').classList.remove('show');
+  showScreen('screen-customer');
+}
+function startOrderFromForm(){
+  const name = document.getElementById('custName').value.trim() || '顾客 Guest';
+  const phone = document.getElementById('custPhone').value.trim() || '--';
+  const address = document.getElementById('custAddress').value.trim();
+  if(pendingOrderType==='delivery' && !address){
+    alert('请填写送餐地址 Please enter delivery address');
+    return;
+  }
+  startNewOrder({type:pendingOrderType, name, phone, address});
+}
+
+/* ===================== RECALL ===================== */
+function goRecall(){
+  const list = document.getElementById('recallList');
+  list.innerHTML = '';
+  if(parkedOrders.length===0){
+    list.innerHTML = `<div class="recall-empty">暂无暂存订单<br>No held orders</div>`;
+  } else {
+    parkedOrders.forEach(o=>{
+      const row = document.createElement('div');
+      row.className = 'recall-item';
+      const label = o.type==='dine-in' ? `桌 ${o.table} 号` : (o.name + ' · ' + o.type.toUpperCase());
+      const total = calcTotal(o.items).total;
+      row.innerHTML = `
+        <div>
+          <div class="ri-main">${label}</div>
+          <div class="ri-sub">${o.items.length} 项菜品 · #${o.id}</div>
+        </div>
+        <div class="ri-total">$${total.toFixed(2)}</div>
+      `;
+      row.onclick = ()=> resumeParkedOrder(o);
+      list.appendChild(row);
+    });
+  }
+  showScreen('screen-recall');
+}
+function resumeParkedOrder(parked){
+  parkedOrders = parkedOrders.filter(o=>o.id!==parked.id);
+  orderMeta = parked;
+  order = parked.items;
+  orderStatus = 'open';
+  currentOrderNo = parked.id;
+  enterOrderScreen();
+}
+
+/* ===================== ORDER FLOW ===================== */
+function startNewOrder(meta){
+  orderMeta = meta;
+  order = [];
+  orderStatus = 'open';
+  currentOrderNo = null;
+  idSeq = 0;
+  enterOrderScreen();
+}
+function enterOrderScreen(){
+  applyOrderLayout();
+  renderCategories();
+  renderTicket();
+  showScreen('screen-order');
+}
+function exitOrderToHome(){
+  if(order.length>0 && orderStatus==='open'){
+    if(!confirm('订单还未暂存或送出，确定要离开吗？\nOrder not saved yet, leave anyway?')) return;
+  }
+  goHome();
+}
+
+function contextLabel(){
+  if(!orderMeta) return '';
+  if(orderMeta.type==='dine-in') return `桌 ${orderMeta.table} 号 · Dine In`;
+  const t = {'to-go':'To Go','pickup':'Pick Up','delivery':'Delivery'}[orderMeta.type];
+  return `${orderMeta.name} · ${t}`;
+}
+function contextDetail(){
+  if(!orderMeta) return '';
+  if(orderMeta.type==='dine-in') return '';
+  let s = `📞 ${orderMeta.phone}`;
+  if(orderMeta.type==='delivery') s += ` · 📍 ${orderMeta.address}`;
+  return s;
+}
+
+/* ===================== CATEGORY / MENU ===================== */
+function renderCategories(){
+  const rail = document.getElementById('rail');
+  rail.querySelectorAll('.cat-btn').forEach(b=>b.remove());
+  Object.keys(MENU).forEach(cat=>{
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn' + (cat===currentCat ? ' active' : '');
+    btn.innerHTML = `<span class="dot"></span><span>${cat.split(' ')[0]}</span>`;
+    btn.onclick = ()=>{ currentCat = cat; renderCategories(); renderMenu(); };
+    rail.appendChild(btn);
+  });
+  renderMenu();
+}
+function renderMenu(){
+  document.getElementById('catTitle').textContent = currentCat;
+  document.getElementById('orderContext').textContent = contextLabel();
+  const menuGrid = document.getElementById('menuGrid');
+  menuGrid.innerHTML = '';
+  MENU[currentCat].forEach(item=>{
+    const card = document.createElement('button');
+    card.className = 'item-card';
+    card.disabled = orderStatus !== 'open';
+    card.style.opacity = orderStatus !== 'open' ? .5 : 1;
+    card.innerHTML = `<div class="item-name">${item.name}</div><div class="item-price">$${item.price.toFixed(2)}</div>`;
+    card.onclick = ()=> addItem(item);
+    menuGrid.appendChild(card);
+  });
+}
+
+/* ===================== ORDER LINE OPS ===================== */
+function addItem(item){
+  const existing = order.find(l=>l.name===item.name && !l.note);
+  if(existing){ existing.qty++; }
+  else { order.push({id: idSeq++, name:item.name, price:item.price, qty:1, note:''}); }
+  renderTicket();
+}
+function changeQty(id, delta){
+  const line = order.find(l=>l.id===id);
+  if(!line) return;
+  line.qty += delta;
+  if(line.qty<=0) order = order.filter(l=>l.id!==id);
+  renderTicket();
+}
+function removeLine(id){
+  order = order.filter(l=>l.id!==id);
+  renderTicket();
+}
+function updateNote(id, val){
+  const line = order.find(l=>l.id===id);
+  if(line) line.note = val;
+}
+function calcTotal(items){
+  const subtotal = items.reduce((s,l)=>s+l.price*l.qty,0);
+  const tax = subtotal*0.08;
+  return {subtotal, tax, total: subtotal+tax};
+}
+
+/* ===================== TICKET RENDER ===================== */
+function renderTicket(){
+  document.getElementById('ticketTitle').textContent = orderMeta ? contextLabel() : '新订单';
+  document.getElementById('ticketCtxDetail').textContent = contextDetail();
+  document.getElementById('orderContext').textContent = contextLabel();
+
+  const ticketBody = document.getElementById('ticketBody');
+  if(order.length===0){
+    ticketBody.innerHTML = `<div class="empty-state"><div class="big">还没有点菜</div><div>点击左侧菜单加入订单</div></div>`;
+  } else {
+    ticketBody.innerHTML = '';
+    order.forEach(line=>{
+      const row = document.createElement('div');
+      row.className = 'line';
+      const locked = orderStatus !== 'open';
+      row.innerHTML = `
+        <div class="qty-stepper">
+          <button ${locked?'disabled':''} onclick="changeQty(${line.id},-1)">－</button>
+          <span>${line.qty}</span>
+          <button ${locked?'disabled':''} onclick="changeQty(${line.id},1)">＋</button>
+        </div>
+        <div class="line-main">
+          <div class="line-name">${line.name}</div>
+          ${line.note ? `<div class="line-note">备注: ${line.note}</div>` : ''}
+          ${!locked ? `<input class="note-input" placeholder="备注 e.g. no onion" value="${line.note}" onchange="updateNote(${line.id}, this.value)">` : ''}
+        </div>
+        <div class="line-price">$${(line.price*line.qty).toFixed(2)}</div>
+        ${!locked ? `<button class="line-remove" onclick="removeLine(${line.id})">✕</button>` : ''}
+      `;
+      ticketBody.appendChild(row);
+    });
+  }
+
+  const {subtotal, tax, total} = calcTotal(order);
+  document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+  document.getElementById('tax').textContent = `$${tax.toFixed(2)}`;
+  document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+
+  document.getElementById('fireBtn').disabled = order.length===0 || orderStatus!=='open';
+  document.getElementById('payBtn').disabled = orderStatus!=='fired';
+  document.getElementById('printBtn').disabled = orderStatus==='open';
+  document.getElementById('holdBtn').style.display = orderStatus==='open' ? 'flex' : 'none';
+
+  renderMenu();
+}
+
+/* ===================== ACTIONS ===================== */
+document.getElementById('fireBtn').onclick = ()=>{
+  if(order.length===0) return;
+  currentOrderNo = currentOrderNo || orderCounter++;
+  orderStatus = 'fired';
+  document.getElementById('ticketNo').textContent = `ORDER #${currentOrderNo} · 已送厨房`;
+  const banner = document.getElementById('statusBanner');
+  banner.className = 'status-banner show status-fired';
+  banner.textContent = '🔥 订单已发送到厨房，等待制作';
+  document.getElementById('newBtn').style.display = 'none';
+  renderTicket();
+};
+
+document.getElementById('holdBtn').onclick = ()=>{
+  if(order.length===0){ alert('订单是空的 Order is empty'); return; }
+  const id = currentOrderNo || orderCounter++;
+  parkedOrders.push({id, ...orderMeta, items: order});
+  goHome();
+};
+
+document.getElementById('printBtn').onclick = ()=>{
+  document.getElementById('pt-heading').textContent = contextLabel() + ' · 厨房单';
+  document.getElementById('pt-order').textContent = `#${currentOrderNo}`;
+  document.getElementById('pt-time').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('pt-items').innerHTML = order.map(l=>
+    `<div class="pt-row"><span>${l.qty}x ${l.name}${l.note? ' ('+l.note+')':''}</span><span>$${(l.price*l.qty).toFixed(2)}</span></div>`
+  ).join('');
+  document.getElementById('pt-total').textContent = document.getElementById('total').textContent;
+  window.print();
+};
+
+document.getElementById('payBtn').onclick = ()=>{
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  overlay.classList.add('show');
+  content.innerHTML = `
+    <div class="spinner"></div>
+    <h3>请在读卡器上刷卡</h3>
+    <p>Square Terminal 正在等待付款 — Total ${document.getElementById('total').textContent}</p>
+  `;
+  setTimeout(()=>{
+    orderStatus = 'paid';
+    saveCustomerHistory(orderMeta, order);
+    saveCompletedOrder();
+    content.innerHTML = `
+      <div class="checkmark">✓</div>
+      <h3>支付成功</h3>
+      <p>已通过 Square Terminal 收款 ${document.getElementById('total').textContent}，收据已从设备打印</p>
+      <button class="modal-close" onclick="closeModal()">完成 Done</button>
+    `;
+    const banner = document.getElementById('statusBanner');
+    banner.className = 'status-banner show status-paid';
+    banner.textContent = '✓ 已支付完成';
+    document.getElementById('newBtn').style.display = 'flex';
+    renderTicket();
+  }, 2200);
+};
+
+document.getElementById('newBtn').onclick = ()=>{
+  goHome();
+};
+
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+async function saveCompletedOrder(){
+  const {subtotal, tax, total} = calcTotal(order);
+  const record = {
+    id: currentOrderNo,
+    type: orderMeta.type,
+    label: contextLabel(),
+    items: order.map(l=>({...l})),
+    subtotal, tax, total,
+    timestamp: new Date()
+  };
+  completedOrders.push(record);
+
+  const {data: orderRow, error: orderErr} = await db.from('orders').insert({
+    type: orderMeta.type,
+    table_number: orderMeta.table || null,
+    customer_name: orderMeta.name || null,
+    customer_phone: orderMeta.phone || null,
+    customer_address: orderMeta.address || null,
+    status: 'paid',
+    subtotal, tax, total,
+    staff_name: staffName,
+    paid_at: new Date().toISOString()
+  }).select().single();
+  if(orderErr){ console.error('saveCompletedOrder (orders) error', orderErr); return; }
+
+  const rows = order.map(l=>({order_id: orderRow.id, name:l.name, price:l.price, qty:l.qty, note:l.note||null}));
+  if(rows.length){
+    const {error: itemsErr} = await db.from('order_items').insert(rows);
+    if(itemsErr) console.error('saveCompletedOrder (order_items) error', itemsErr);
+  }
+}
+
+/* ===================== ADMIN: PIN GATE ===================== */
+let adminGateBuffer = "";
+function renderAdminGatePad(){
+  const pad = document.getElementById('adminGatePad');
+  pad.innerHTML = '';
+  ['1','2','3','4','5','6','7','8','9','C','0','OK'].forEach(k=>{
+    const btn = document.createElement('button');
+    btn.textContent = k;
+    if(k==='C'){ btn.onclick = ()=>{adminGateBuffer=''; renderAdminGateDots();}; }
+    else if(k==='OK'){ btn.onclick = submitAdminGate; }
+    else { btn.onclick = ()=>{ if(adminGateBuffer.length<4){ adminGateBuffer+=k; renderAdminGateDots(); if(adminGateBuffer.length===4) setTimeout(submitAdminGate,150);} }; }
+    pad.appendChild(btn);
+  });
+}
+function renderAdminGateDots(){
+  const wrap = document.getElementById('adminGateDots');
+  wrap.innerHTML = '';
+  for(let i=0;i<4;i++){
+    const d = document.createElement('div');
+    d.className = 'pgd' + (i<adminGateBuffer.length ? ' filled':'');
+    wrap.appendChild(d);
+  }
+}
+function openAdminGate(){
+  adminGateBuffer = "";
+  renderAdminGateDots();
+  renderAdminGatePad();
+  document.getElementById('adminGateOverlay').classList.add('show');
+}
+function closeAdminGate(){
+  document.getElementById('adminGateOverlay').classList.remove('show');
+}
+function submitAdminGate(){
+  if(adminGateBuffer.length!==4) return;
+  const account = staffAccounts.find(a=>a.pin===adminGateBuffer && a.role==='manager');
+  if(!account){
+    alert('密码不正确，或该账号没有管理员权限\nIncorrect PIN or not a manager account');
+    adminGateBuffer = "";
+    renderAdminGateDots();
+    return;
+  }
+  closeAdminGate();
+  showScreen('screen-admin');
+  switchAdminTab('menu');
+}
+
+/* ===================== ADMIN: TAB SWITCHING ===================== */
+function switchAdminTab(tab){
+  document.querySelectorAll('.admin-tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  const body = document.getElementById('adminBody');
+  if(tab==='menu') renderAdminMenu(body);
+  else if(tab==='reports') renderAdminReports(body);
+  else if(tab==='staff') renderAdminStaff(body);
+  else if(tab==='history') renderAdminHistory(body);
+  else if(tab==='settings') renderAdminSettings(body);
+}
+
+/* ===================== ADMIN: MENU MANAGEMENT ===================== */
+function renderAdminMenu(body){
+  let html = `<h2>菜单管理 Menu Management</h2>`;
+  Object.keys(MENU).forEach(cat=>{
+    html += `<div class="admin-section"><h3>${cat}</h3><table class="admin-table"><thead><tr>
+      <th>菜品名 Name</th><th style="width:120px;">价格 Price</th><th style="width:50px;"></th>
+    </tr></thead><tbody>`;
+    MENU[cat].forEach((item,idx)=>{
+      html += `<tr>
+        <td><input type="text" value="${item.name}" onchange="updateMenuItem('${cat}',${idx},'name',this.value)"></td>
+        <td><input type="number" step="0.01" value="${item.price.toFixed(2)}" onchange="updateMenuItem('${cat}',${idx},'price',this.value)"></td>
+        <td><button class="row-del" onclick="deleteMenuItem('${cat}',${idx})">✕</button></td>
+      </tr>`;
+    });
+    html += `</tbody></table>
+      <div class="admin-add-form">
+        <input type="text" id="newItemName-${cat}" placeholder="新菜品名 e.g. Spicy Wontons 红油抄手">
+        <input type="number" step="0.01" id="newItemPrice-${cat}" placeholder="价格" style="width:100px;">
+        <button class="admin-btn" onclick="addMenuItem('${cat}')">＋ 添加菜品</button>
+      </div>
+    </div>`;
+  });
+  html += `<div class="admin-section"><h3>新增分类 Add Category</h3>
+    <div class="admin-add-form">
+      <input type="text" id="newCatName" placeholder="分类名 e.g. 火锅 Hot Pot">
+      <button class="admin-btn" onclick="addMenuCategory()">＋ 添加分类</button>
+    </div></div>`;
+  body.innerHTML = html;
+}
+function updateMenuItem(cat, idx, field, val){
+  const item = MENU[cat][idx];
+  if(field==='price') item.price = parseFloat(val)||0;
+  else item.name = val;
+  db.from('menu_items').update({name:item.name, price:item.price}).eq('id', item.id)
+    .then(({error})=>{ if(error) console.error('updateMenuItem error', error); });
+}
+function deleteMenuItem(cat, idx){
+  if(!confirm('确定删除这个菜品吗？Delete this item?')) return;
+  const item = MENU[cat][idx];
+  MENU[cat].splice(idx,1);
+  renderAdminMenu(document.getElementById('adminBody'));
+  db.from('menu_items').delete().eq('id', item.id)
+    .then(({error})=>{ if(error) console.error('deleteMenuItem error', error); });
+}
+async function addMenuItem(cat){
+  const nameInput = document.getElementById(`newItemName-${cat}`);
+  const priceInput = document.getElementById(`newItemPrice-${cat}`);
+  const name = nameInput.value.trim();
+  const price = parseFloat(priceInput.value);
+  if(!name || isNaN(price)){ alert('请填写菜品名和价格 Please fill in name and price'); return; }
+  const {data, error} = await db.from('menu_items')
+    .insert({category_id: categoryIds[cat], name, price, sort_order: MENU[cat].length+1})
+    .select().single();
+  if(error){ alert('保存失败，请重试 Failed to save: '+error.message); return; }
+  MENU[cat].push({id:data.id, name, price});
+  renderAdminMenu(document.getElementById('adminBody'));
+}
+async function addMenuCategory(){
+  const input = document.getElementById('newCatName');
+  const name = input.value.trim();
+  if(!name){ return; }
+  if(MENU[name]){ alert('该分类已存在 Category already exists'); return; }
+  const {data, error} = await db.from('categories')
+    .insert({name, sort_order: Object.keys(MENU).length+1}).select().single();
+  if(error){ alert('保存失败，请重试 Failed to save: '+error.message); return; }
+  MENU[name] = [];
+  categoryIds[name] = data.id;
+  renderAdminMenu(document.getElementById('adminBody'));
+}
+
+/* ===================== ADMIN: REPORTS ===================== */
+async function renderAdminReports(body){
+  body.innerHTML = `<h2>销售报表 Sales Reports</h2><p style="color:var(--slate); font-size:13.5px;">加载中... Loading...</p>`;
+
+  const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
+  const {data: todaysOrders, error} = await db.from('orders')
+    .select('*, order_items(*)')
+    .eq('status','paid')
+    .gte('paid_at', startOfDay.toISOString());
+
+  if(error){
+    body.innerHTML = `<h2>销售报表 Sales Reports</h2><p style="color:var(--ember); font-size:13.5px;">加载失败 Failed to load: ${error.message}</p>`;
+    return;
+  }
+
+  const revenue = todaysOrders.reduce((s,o)=>s+parseFloat(o.total),0);
+  const avgOrder = todaysOrders.length ? revenue/todaysOrders.length : 0;
+
+  const qtyMap = {};
+  todaysOrders.forEach(o=> o.order_items.forEach(l=>{ qtyMap[l.name] = (qtyMap[l.name]||0) + l.qty; }));
+  const topItems = Object.entries(qtyMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const maxQty = topItems.length ? topItems[0][1] : 1;
+
+  let html = `<h2>销售报表 Sales Reports</h2>
+    <div class="stat-row">
+      <div class="stat-card"><div class="sc-label">今日营业额 Today's Revenue</div><div class="sc-val">$${revenue.toFixed(2)}</div></div>
+      <div class="stat-card"><div class="sc-label">今日订单数 Orders Today</div><div class="sc-val">${todaysOrders.length}</div></div>
+      <div class="stat-card"><div class="sc-label">平均客单价 Avg Order</div><div class="sc-val">$${avgOrder.toFixed(2)}</div></div>
+    </div>
+    <div class="admin-section"><h3>今日热销菜品 Top Items Today</h3>`;
+  if(topItems.length===0){
+    html += `<p style="color:var(--slate); font-size:13.5px;">今天还没有已完成的订单 No completed orders yet today.</p>`;
+  } else {
+    topItems.forEach(([name,qty])=>{
+      html += `<div class="bar-row"><div class="br-name">${name}</div>
+        <div class="br-track"><div class="br-fill" style="width:${(qty/maxQty*100)}%"></div></div>
+        <div class="br-qty">${qty} 份</div></div>`;
+    });
+  }
+  html += `</div>`;
+  body.innerHTML = html;
+}
+
+/* ===================== ADMIN: STAFF ACCOUNTS ===================== */
+function renderAdminStaff(body){
+  let html = `<h2>员工账号 Staff Accounts</h2>
+    <table class="admin-table"><thead><tr>
+      <th>姓名 Name</th><th style="width:120px;">密码 PIN</th><th style="width:140px;">权限 Role</th><th style="width:50px;"></th>
+    </tr></thead><tbody>`;
+  staffAccounts.forEach((a,idx)=>{
+    html += `<tr>
+      <td><input type="text" value="${a.name}" onchange="updateStaff(${idx},'name',this.value)"></td>
+      <td><input type="text" maxlength="4" value="${a.pin}" onchange="updateStaff(${idx},'pin',this.value)"></td>
+      <td><select onchange="updateStaff(${idx},'role',this.value)">
+        <option value="staff" ${a.role==='staff'?'selected':''}>员工 Staff</option>
+        <option value="manager" ${a.role==='manager'?'selected':''}>管理员 Manager</option>
+      </select></td>
+      <td><button class="row-del" onclick="deleteStaff(${idx})">✕</button></td>
+    </tr>`;
+  });
+  html += `</tbody></table>
+    <div class="admin-add-form">
+      <input type="text" id="newStaffName" placeholder="姓名 Name">
+      <input type="text" id="newStaffPin" maxlength="4" placeholder="4位密码 PIN" style="width:100px;">
+      <select id="newStaffRole"><option value="staff">员工 Staff</option><option value="manager">管理员 Manager</option></select>
+      <button class="admin-btn" onclick="addStaff()">＋ 添加员工</button>
+    </div>`;
+  body.innerHTML = html;
+}
+function updateStaff(idx, field, val){
+  if(field==='pin'){ val = val.replace(/\D/g,'').slice(0,4); }
+  staffAccounts[idx][field] = val;
+  const s = staffAccounts[idx];
+  db.from('staff').update({name:s.name, pin:s.pin, role:s.role}).eq('id', s.id)
+    .then(({error})=>{ if(error) console.error('updateStaff error', error); });
+}
+function deleteStaff(idx){
+  if(staffAccounts.length<=1){ alert('至少要保留一个账号 Must keep at least one account'); return; }
+  if(!confirm('确定删除这个账号吗？Delete this account?')) return;
+  const s = staffAccounts[idx];
+  staffAccounts.splice(idx,1);
+  renderAdminStaff(document.getElementById('adminBody'));
+  db.from('staff').delete().eq('id', s.id)
+    .then(({error})=>{ if(error) console.error('deleteStaff error', error); });
+}
+async function addStaff(){
+  const name = document.getElementById('newStaffName').value.trim();
+  const pin = document.getElementById('newStaffPin').value.trim();
+  const role = document.getElementById('newStaffRole').value;
+  if(!name || pin.length!==4 || isNaN(pin)){ alert('请填写姓名和 4 位数字密码 Please enter name and a 4-digit PIN'); return; }
+  if(staffAccounts.some(a=>a.pin===pin)){ alert('该密码已被使用 PIN already in use'); return; }
+  const {data, error} = await db.from('staff').insert({name, pin, role}).select().single();
+  if(error){ alert('保存失败，请重试 Failed to save: '+error.message); return; }
+  staffAccounts.push({id:data.id, name, pin, role});
+  renderAdminStaff(document.getElementById('adminBody'));
+}
+
+/* ===================== ADMIN: ORDER HISTORY ===================== */
+async function renderAdminHistory(body){
+  body.innerHTML = `<h2>历史订单 Order History</h2><p style="color:var(--slate); font-size:13.5px;">加载中... Loading...</p>`;
+
+  const {data: orders, error} = await db.from('orders')
+    .select('*, order_items(*)')
+    .eq('status','paid')
+    .order('paid_at', {ascending:false})
+    .limit(100);
+
+  if(error){
+    body.innerHTML = `<h2>历史订单 Order History</h2><p style="color:var(--ember); font-size:13.5px;">加载失败 Failed to load: ${error.message}</p>`;
+    return;
+  }
+
+  let html = `<h2>历史订单 Order History</h2>`;
+  if(orders.length===0){
+    html += `<div class="history-empty">暂无已完成的订单<br>No completed orders yet</div>`;
+  } else {
+    orders.forEach(o=>{
+      const label = o.type==='dine-in' ? `桌 ${o.table_number} 号` : `${o.customer_name||'Guest'} · ${o.type.toUpperCase()}`;
+      const time = new Date(o.paid_at).toLocaleString('en-US',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+      const itemsHtml = o.order_items.map(l=>`${l.qty}x ${l.name}${l.note?' ('+l.note+')':''} — $${(l.price*l.qty).toFixed(2)}`).join('<br>');
+      html += `<div class="history-row" onclick="this.classList.toggle('expanded')">
+        <div class="hr-top">
+          <div>
+            <div class="hr-label">${label} <span style="color:var(--slate); font-weight:400;">#${o.order_number}</span></div>
+            <div class="hr-time">${time}</div>
+          </div>
+          <div class="hr-total">$${parseFloat(o.total).toFixed(2)}</div>
+        </div>
+        <div class="hr-items">${itemsHtml}</div>
+      </div>`;
+    });
+  }
+  body.innerHTML = html;
+}
+
+/* ===================== ADMIN: HARDWARE SETTINGS ===================== */
+function renderAdminSettings(body){
+  const s = hardwareSettings;
+  body.innerHTML = `
+    <h2>打印机 / 刷卡机设置 Hardware Settings</h2>
+    <div class="admin-section">
+      <h3>点餐页布局 Order Screen Layout</h3>
+      <div class="layout-picker">
+        <div class="layout-card ${appSettings.orderLayout==='top'?'selected':''}" onclick="setOrderLayout('top')">
+          <div class="lc-diagram lc-top">
+            <div class="lc-ticket">收据<br>Ticket</div>
+            <div class="lc-cats">菜单类目 Categories</div>
+            <div class="lc-items">菜品 Items</div>
+          </div>
+          <div class="lc-label">布局一 · 类目在上，菜品在下</div>
+        </div>
+        <div class="layout-card ${appSettings.orderLayout==='right'?'selected':''}" onclick="setOrderLayout('right')">
+          <div class="lc-diagram lc-right">
+            <div class="lc-ticket">收据<br>Ticket</div>
+            <div class="lc-items">菜品 Items</div>
+            <div class="lc-cats-v">类目<br>Cats</div>
+          </div>
+          <div class="lc-label">布局二 · 类目在右，菜品居中</div>
+        </div>
+      </div>
+      <div class="settings-note">两侧收据都固定在左边，方便员工结账时视线不用来回移动。切换后马上生效，重新进入点餐页即可看到。</div>
+    </div>
+    <div class="admin-section">
+      <h3>小票打印机 Kitchen / Receipt Printer</h3>
+      <div class="settings-form">
+        <div class="field"><label>打印机型号 Printer Model/Name</label>
+          <input type="text" id="set-printerName" value="${s.printerName}"></div>
+        <div class="field"><label>连接方式 Connection</label>
+          <select id="set-printerConn">
+            <option value="network" ${s.printerConn==='network'?'selected':''}>网络 Network (IP)</option>
+            <option value="usb" ${s.printerConn==='usb'?'selected':''}>USB</option>
+            <option value="bluetooth" ${s.printerConn==='bluetooth'?'selected':''}>蓝牙 Bluetooth</option>
+          </select></div>
+        <div class="field"><label>小票纸宽度 Paper Width</label>
+          <select id="set-paperWidth">
+            <option value="58" ${s.paperWidth==='58'?'selected':''}>58mm</option>
+            <option value="80" ${s.paperWidth==='80'?'selected':''}>80mm</option>
+          </select></div>
+        <div class="settings-note">当前打印用的是浏览器打印(window.print)。接入真实小票/厨房打印机需要一个本地打印服务(监听 ESC/POS 指令),这里先保存配置，方便以后接入。</div>
+        <button class="admin-btn save" onclick="saveHardwareSettings()">保存设置 Save</button>
+        <div class="save-toast" id="printerSaveToast">✓ 已保存 Saved</div>
+      </div>
+    </div>
+    <div class="admin-section">
+      <h3>Square 读卡器 Card Reader</h3>
+      <div class="settings-form">
+        <div class="field"><label>Square Location ID</label>
+          <input type="text" id="set-squareLocation" placeholder="e.g. L1AB2CD3EF4GH" value="${s.squareLocationId}"></div>
+        <div class="field"><label>Square Device ID (Terminal)</label>
+          <input type="text" id="set-squareDevice" placeholder="e.g. 9fa747a2-25ff-48ee..." value="${s.squareDeviceId}"></div>
+        <div class="field"><label>Square Access Token</label>
+          <input type="password" id="set-squareToken" placeholder="sq0atp-..." value="${s.squareAccessToken}"></div>
+        <div class="settings-note">这些信息从你的 Square 开发者账号后台获取(developer.squareup.com)。填好之后就能把"刷卡结账"从模拟换成真实的 Terminal API 调用。</div>
+        <button class="admin-btn save" onclick="saveHardwareSettings()">保存设置 Save</button>
+      </div>
+    </div>
+  `;
+}
+function setOrderLayout(mode){
+  appSettings.orderLayout = mode;
+  renderAdminSettings(document.getElementById('adminBody'));
+  db.from('settings').upsert({key:'app', value: appSettings})
+    .then(({error})=>{ if(error) console.error('setOrderLayout error', error); });
+}
+function saveHardwareSettings(){
+  hardwareSettings = {
+    printerName: document.getElementById('set-printerName').value,
+    printerConn: document.getElementById('set-printerConn').value,
+    paperWidth: document.getElementById('set-paperWidth').value,
+    squareLocationId: document.getElementById('set-squareLocation').value,
+    squareDeviceId: document.getElementById('set-squareDevice').value,
+    squareAccessToken: document.getElementById('set-squareToken').value,
+  };
+  db.from('settings').upsert({key:'hardware', value: hardwareSettings})
+    .then(({error})=>{ if(error) console.error('saveHardwareSettings error', error); });
+  const toast = document.getElementById('printerSaveToast');
+  if(toast){
+    toast.classList.add('show');
+    setTimeout(()=>toast.classList.remove('show'), 2000);
+  }
+}
+
+/* ===================== INIT: load everything from Supabase ===================== */
+async function bootstrapApp(){
+  const pinLabel = document.getElementById('pinLabel');
+  pinLabel.textContent = '正在连接数据库... Loading...';
+
+  try{
+    // Categories + menu items
+    const {data: cats, error: catsErr} = await db.from('categories').select('*').order('sort_order');
+    if(catsErr) throw catsErr;
+    const {data: items, error: itemsErr} = await db.from('menu_items').select('*').eq('active', true).order('sort_order');
+    if(itemsErr) throw itemsErr;
+
+    MENU = {}; categoryIds = {};
+    cats.forEach(c=>{ MENU[c.name] = []; categoryIds[c.name] = c.id; });
+    items.forEach(it=>{
+      const catName = cats.find(c=>c.id===it.category_id)?.name;
+      if(catName) MENU[catName].push({id: it.id, name: it.name, price: parseFloat(it.price)});
+    });
+    currentCat = Object.keys(MENU)[0] || "";
+
+    // Staff accounts
+    const {data: staff, error: staffErr} = await db.from('staff').select('*').eq('active', true);
+    if(staffErr) throw staffErr;
+    staffAccounts = staff.map(s=>({id:s.id, pin:s.pin, name:s.name, role:s.role}));
+
+    // Settings (hardware + app layout)
+    const {data: settingsRows, error: settingsErr} = await db.from('settings').select('*');
+    if(settingsErr) throw settingsErr;
+    settingsRows.forEach(row=>{
+      if(row.key==='hardware') hardwareSettings = {...hardwareSettings, ...row.value};
+      if(row.key==='app') appSettings = {...appSettings, ...row.value};
+    });
+
+    // Customer history (for caller ID recognition)
+    await loadCustomersFromDB();
+
+    pinLabel.textContent = '请输入密码 Enter your PIN';
+  } catch(err){
+    console.error('bootstrapApp error', err);
+    pinLabel.textContent = '数据库连接失败，请检查网络 Connection failed';
+  }
+}
+
+renderPinGrid();
+renderPinDots();
+updateClock();
+bootstrapApp();
+
+</script>
+
+</body>
+</html>
