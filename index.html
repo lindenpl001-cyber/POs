@@ -432,16 +432,32 @@
   .ticket-body{flex:1; overflow-y:auto; padding:6px 16px; border-top:1.5px dashed var(--slate-line); border-bottom:1.5px dashed var(--slate-line);}
   .empty-state{height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--slate); text-align:center; padding:20px; gap:6px;}
   .empty-state .big{font-family:'Fraunces',serif; font-size:16px; color:var(--ink); font-weight:600;}
-  .line{display:flex; align-items:flex-start; gap:9px; padding:11px 0; border-bottom:1px solid #EFEAE0;}
-  .qty-stepper{display:flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace;}
-  .qty-stepper button{width:22px;height:22px; border-radius:6px; border:1.5px solid var(--slate-line); background:var(--paper); font-size:13px; font-weight:700; cursor:pointer;}
-  .qty-stepper span{width:14px; text-align:center; font-weight:600; font-size:12.5px;}
+  .line{border-bottom:1px solid #EFEAE0; position:relative;}
+  .line.selected{background:#FBF6E9;}
+  .line-tap{display:flex; align-items:center; gap:9px; padding:12px 0; cursor:pointer;}
   .line-main{flex:1;}
   .line-name{font-weight:700; font-size:13.5px;}
-  .line-note{font-size:11.5px; color:var(--ember); margin-top:2px; font-style:italic;}
+  .line-flag{font-size:11px; margin-left:2px;}
   .line-price{font-family:'IBM Plex Mono',monospace; font-size:12.5px; font-weight:600; color:var(--slate); white-space:nowrap;}
-  .line-remove{background:none;border:none;color:var(--slate); font-size:15px; cursor:pointer; padding:2px 3px;}
-  .note-input{width:100%; margin-top:5px; font-size:11.5px; border:1px solid var(--slate-line); border-radius:6px; padding:5px 7px; background:var(--paper);}
+  .line-remove{
+    position:absolute; top:8px; right:-2px; background:none; border:none; color:var(--slate);
+    font-size:14px; cursor:pointer; padding:4px 6px;
+  }
+  .line-detail{font-size:11.5px; color:var(--ember); padding:0 0 10px; font-style:italic;}
+  .line-actions{
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; padding:0 0 12px;
+  }
+  .line-actions button{
+    background:var(--white); border:1.5px solid var(--slate-line); border-radius:9px;
+    padding:8px 2px; font-size:10.5px; font-weight:700; color:var(--ink); cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+  }
+  .line-actions .la-icon{font-size:13px; font-family:'IBM Plex Mono',monospace;}
+  .breakline-row{
+    display:flex; align-items:center; justify-content:center; gap:8px; position:relative;
+    padding:8px 0; color:var(--slate); font-size:11px; letter-spacing:1px;
+  }
+  .breakline-row .line-remove{top:2px;}
   .ticket-totals{padding:10px 16px; font-family:'IBM Plex Mono',monospace; font-size:12.5px;}
   .totals-row{display:flex; justify-content:space-between; padding:2px 0; color:var(--slate);}
   .totals-row.grand{color:var(--ink); font-weight:700; font-size:15px; padding-top:6px;}
@@ -486,9 +502,9 @@
   .status-paid{background:#E3EBE3; color:var(--herb);}
 
   /* ================= MODAL ================= */
-  .modal-overlay{position:fixed; inset:0; background:rgba(35,32,27,.55); display:none; align-items:center; justify-content:center; z-index:50;}
+  .modal-overlay{position:fixed; inset:0; background:rgba(35,32,27,.55); display:none; align-items:flex-start; justify-content:center; z-index:50; overflow-y:auto; padding:5vh 0;}
   .modal-overlay.show{display:flex;}
-  .modal{background:var(--white); border-radius:16px; padding:28px 26px; width:320px; text-align:center;}
+  .modal{background:var(--white); border-radius:16px; padding:28px 26px; width:320px; max-width:90vw; text-align:center; max-height:88vh; overflow-y:auto;}
   .modal h3{font-family:'Fraunces',serif; font-size:20px; margin-bottom:8px;}
   .modal p{font-size:13.5px; color:var(--slate); margin-bottom:20px; line-height:1.5;}
   .modal .spinner{width:34px; height:34px; margin:0 auto 16px; border:3px solid var(--slate-line); border-top-color:var(--herb); border-radius:50%; animation:spin .8s linear infinite;}
@@ -1252,7 +1268,7 @@ async function resumeOrderFromDB(dbOrderId){
     table: o.table_label, name: o.customer_name, phone: o.customer_phone, address: o.customer_address,
     serverName: o.server_name || o.staff_name, guestCount: o.guest_count, note: o.order_note || ''
   };
-  order = o.order_items.map(it=>({id: idSeq++, name:it.name, price:parseFloat(it.price), qty:it.qty, note:it.note||''}));
+  order = o.order_items.map(it=>({id: idSeq++, name:it.name, price:parseFloat(it.price), qty:it.qty, note:it.note||'', modifier:''}));
   orderStatus = o.status==='paid' ? 'paid' : (o.status==='fired' ? 'fired' : 'open');
   currentOrderNo = o.id;
   enterOrderScreen();
@@ -1344,29 +1360,128 @@ function renderMenu(){
 }
 
 /* ===================== ORDER LINE OPS ===================== */
+let selectedLineId = null;
 function addItem(item){
-  const existing = order.find(l=>l.name===item.name && !l.note);
+  const existing = order.find(l=>l.name===item.name && !l.note && !l.modifier);
   if(existing){ existing.qty++; }
-  else { order.push({id: idSeq++, name:item.name, price:item.price, qty:1, note:''}); }
+  else { order.push({id: idSeq++, name:item.name, price:item.price, qty:1, note:'', modifier:''}); }
+  renderTicket();
+}
+function toggleSelectLine(id){
+  selectedLineId = (selectedLineId===id) ? null : id;
   renderTicket();
 }
 function changeQty(id, delta){
   const line = order.find(l=>l.id===id);
   if(!line) return;
   line.qty += delta;
-  if(line.qty<=0) order = order.filter(l=>l.id!==id);
+  if(line.qty<=0){ order = order.filter(l=>l.id!==id); if(selectedLineId===id) selectedLineId=null; }
   renderTicket();
 }
 function removeLine(id){
   order = order.filter(l=>l.id!==id);
+  if(selectedLineId===id) selectedLineId = null;
   renderTicket();
 }
 function updateNote(id, val){
   const line = order.find(l=>l.id===id);
   if(line) line.note = val;
 }
+function insertBreakline(afterId){
+  const idx = order.findIndex(l=>l.id===afterId);
+  if(idx===-1) return;
+  order.splice(idx+1, 0, {id: idSeq++, type:'breakline'});
+  selectedLineId = null;
+  renderTicket();
+}
+function openQtyModal(id){
+  const line = order.find(l=>l.id===id);
+  if(!line) return;
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  overlay.classList.add('show');
+  content.innerHTML = `
+    <h3>数量 Quantity</h3>
+    <p>${line.name}</p>
+    <div class="field"><input type="number" min="1" id="qtyInput" value="${line.qty}" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px; text-align:center;"></div>
+    <button class="modal-close" onclick="saveQty(${id})">保存 Save</button>
+  `;
+  setTimeout(()=>document.getElementById('qtyInput')?.focus(), 100);
+}
+function saveQty(id){
+  const val = parseInt(document.getElementById('qtyInput').value);
+  const line = order.find(l=>l.id===id);
+  if(line && val>0) line.qty = val;
+  else if(line && val<=0){ order = order.filter(l=>l.id!==id); selectedLineId=null; }
+  renderTicket();
+  closeModal();
+}
+function openLineNoteModal(id){
+  const line = order.find(l=>l.id===id);
+  if(!line) return;
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  overlay.classList.add('show');
+  content.innerHTML = `
+    <h3>备注 Note</h3>
+    <p>${line.name}</p>
+    <div class="field"><textarea id="lineNoteInput" rows="3" placeholder="e.g. no onion, extra spicy" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:14px; font-family:'Inter',sans-serif;">${line.note||''}</textarea></div>
+    <button class="modal-close" onclick="saveLineNote(${id})">保存 Save</button>
+  `;
+  setTimeout(()=>document.getElementById('lineNoteInput')?.focus(), 100);
+}
+function saveLineNote(id){
+  const val = document.getElementById('lineNoteInput').value.trim();
+  const line = order.find(l=>l.id===id);
+  if(line) line.note = val;
+  renderTicket();
+  closeModal();
+}
+function openModifierModal(id){
+  const line = order.find(l=>l.id===id);
+  if(!line) return;
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  overlay.classList.add('show');
+  content.innerHTML = `
+    <h3>调味料 Seasoning / Modifiers</h3>
+    <p>${line.name}</p>
+    <div class="field"><input type="text" id="modInput" value="${line.modifier||''}" placeholder="e.g. less salt, no MSG" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
+    <button class="modal-close" onclick="saveModifier(${id})">保存 Save</button>
+  `;
+  setTimeout(()=>document.getElementById('modInput')?.focus(), 100);
+}
+function saveModifier(id){
+  const val = document.getElementById('modInput').value.trim();
+  const line = order.find(l=>l.id===id);
+  if(line) line.modifier = val;
+  renderTicket();
+  closeModal();
+}
+function openPriceModal(id){
+  const line = order.find(l=>l.id===id);
+  if(!line) return;
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  overlay.classList.add('show');
+  content.innerHTML = `
+    <h3>改价 Change Price</h3>
+    <p>${line.name} · 原价 $${line.price.toFixed(2)}</p>
+    <div class="field"><input type="number" step="0.01" min="0" id="priceInput" value="${line.price.toFixed(2)}" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px; text-align:center;"></div>
+    <button class="modal-close" onclick="savePrice(${id})">保存 Save</button>
+  `;
+  setTimeout(()=>document.getElementById('priceInput')?.focus(), 100);
+}
+function savePrice(id){
+  const val = parseFloat(document.getElementById('priceInput').value);
+  const line = order.find(l=>l.id===id);
+  if(line && !isNaN(val) && val>=0) line.price = val;
+  renderTicket();
+  closeModal();
+}
 function calcTotal(items){
-  const subtotal = items.reduce((s,l)=>s+l.price*l.qty,0);
+  const real = items.filter(l=>l.type!=='breakline');
+  const subtotal = real.reduce((s,l)=>s+l.price*l.qty,0);
   const tax = subtotal*0.08;
   return {subtotal, tax, total: subtotal+tax};
 }
@@ -1400,24 +1515,50 @@ function renderTicket(){
   } else {
     ticketBody.innerHTML = '';
     order.forEach(line=>{
-      const row = document.createElement('div');
-      row.className = 'line';
       const locked = orderStatus !== 'open';
+
+      if(line.type==='breakline'){
+        const bl = document.createElement('div');
+        bl.className = 'breakline-row';
+        bl.innerHTML = `<span>┈┈┈ 分割线 ┈┈┈</span>${!locked ? `<button class="line-remove" onclick="removeLine(${line.id})">✕</button>`:''}`;
+        ticketBody.appendChild(bl);
+        return;
+      }
+
+      const row = document.createElement('div');
+      row.className = 'line' + (line.id===selectedLineId ? ' selected':'');
+      const hasExtra = line.note || line.modifier;
       row.innerHTML = `
-        <div class="qty-stepper">
-          <button ${locked?'disabled':''} onclick="changeQty(${line.id},-1)">－</button>
-          <span>${line.qty}</span>
-          <button ${locked?'disabled':''} onclick="changeQty(${line.id},1)">＋</button>
+        <div class="line-tap" onclick="toggleSelectLine(${line.id})">
+          <div class="line-main">
+            <div class="line-name">${line.qty} × ${line.name}${hasExtra ? ' <span class=\"line-flag\">📝</span>' : ''}</div>
+          </div>
+          <div class="line-price">$${(line.price*line.qty).toFixed(2)}</div>
         </div>
-        <div class="line-main">
-          <div class="line-name">${line.name}</div>
-          ${line.note ? `<div class="line-note">备注: ${line.note}</div>` : ''}
-          ${!locked ? `<input class="note-input" placeholder="备注 e.g. no onion" value="${line.note}" onchange="updateNote(${line.id}, this.value)">` : ''}
-        </div>
-        <div class="line-price">$${(line.price*line.qty).toFixed(2)}</div>
         ${!locked ? `<button class="line-remove" onclick="removeLine(${line.id})">✕</button>` : ''}
       `;
       ticketBody.appendChild(row);
+
+      if(line.id===selectedLineId && !locked){
+        const panel = document.createElement('div');
+        panel.className = 'line-actions';
+        panel.innerHTML = `
+          <button onclick="insertBreakline(${line.id})"><span class="la-icon">┊</span>分割线</button>
+          <button onclick="changeQty(${line.id},1)"><span class="la-icon">＋</span>加1</button>
+          <button onclick="openQtyModal(${line.id})"><span class="la-icon">#</span>数量</button>
+          <button onclick="changeQty(${line.id},-1)"><span class="la-icon">－</span>减1</button>
+          <button onclick="openLineNoteModal(${line.id})"><span class="la-icon">📝</span>备注</button>
+          <button onclick="openModifierModal(${line.id})"><span class="la-icon">🧂</span>调味料</button>
+          <button onclick="openPriceModal(${line.id})"><span class="la-icon">💲</span>改价</button>
+        `;
+        ticketBody.appendChild(panel);
+        if(line.note || line.modifier){
+          const detail = document.createElement('div');
+          detail.className = 'line-detail';
+          detail.innerHTML = `${line.modifier?`<div>🧂 ${line.modifier}</div>`:''}${line.note?`<div>📝 ${line.note}</div>`:''}`;
+          ticketBody.appendChild(detail);
+        }
+      }
     });
   }
 
@@ -1467,9 +1608,10 @@ function printKitchenTicket(){
   document.getElementById('pt-heading').textContent = contextLabel() + ' · 厨房单';
   document.getElementById('pt-order').textContent = `#${orderMeta.orderNo}`;
   document.getElementById('pt-time').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('pt-items').innerHTML = order.map(l=>
-    `<div class="pt-row"><span>${l.qty}x ${l.name}${l.note? ' ('+l.note+')':''}</span><span>$${(l.price*l.qty).toFixed(2)}</span></div>`
-  ).join('');
+  document.getElementById('pt-items').innerHTML = order.filter(l=>l.type!=='breakline').map(l=>{
+    const extras = [l.modifier, l.note].filter(Boolean).join(', ');
+    return `<div class="pt-row"><span>${l.qty}x ${l.name}${extras? ' ('+extras+')':''}</span><span>$${(l.price*l.qty).toFixed(2)}</span></div>`;
+  }).join('');
   document.getElementById('pt-total').textContent = document.getElementById('total').textContent;
   window.print();
 }
@@ -1698,7 +1840,10 @@ async function createOrderInDB(meta){
 async function syncOrderItems(dbOrderId){
   if(!dbOrderId) return;
   await db.from('order_items').delete().eq('order_id', dbOrderId);
-  const rows = order.map(l=>({order_id: dbOrderId, name:l.name, price:l.price, qty:l.qty, note:l.note||null}));
+  const rows = order.filter(l=>l.type!=='breakline').map(l=>{
+    const combinedNote = [l.modifier ? '调味:'+l.modifier : '', l.note || ''].filter(Boolean).join(' / ');
+    return {order_id: dbOrderId, name:l.name, price:l.price, qty:l.qty, note: combinedNote || null};
+  });
   if(rows.length){
     const {error} = await db.from('order_items').insert(rows);
     if(error) console.error('syncOrderItems error', error);
