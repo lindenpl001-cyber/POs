@@ -618,6 +618,70 @@
   .pin-gate-dots .pgd{width:12px;height:12px;border-radius:50%;border:2px solid var(--slate-line);}
   .pin-gate-dots .pgd.filled{background:var(--amber); border-color:var(--amber);}
 
+  /* ================= FULL PAYMENT SCREEN ================= */
+  .pay-overlay{
+    position:fixed; inset:0; background:rgba(35,32,27,.6); z-index:70;
+    display:none; align-items:center; justify-content:center; padding:3vh 3vw;
+  }
+  .pay-overlay.show{display:flex;}
+  .pay-screen{
+    background:var(--paper); border-radius:20px; width:100%; max-width:920px; max-height:94vh;
+    display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,.4);
+  }
+  .pay-top{
+    background:var(--white); padding:20px 24px; display:flex; align-items:baseline; gap:10px;
+    border-bottom:1.5px solid var(--slate-line); position:relative;
+  }
+  .pay-top-label{font-size:14px; color:var(--slate); font-weight:700;}
+  .pay-top-amount{font-family:'IBM Plex Mono',monospace; font-size:34px; font-weight:700; color:var(--ink);}
+  .pay-close{
+    position:absolute; right:20px; top:50%; transform:translateY(-50%);
+    width:34px; height:34px; border-radius:50%; border:none; background:var(--paper);
+    color:var(--slate); font-size:15px; cursor:pointer;
+  }
+  .pay-body{flex:1; display:grid; grid-template-columns:1fr 1fr; gap:0; overflow-y:auto;}
+  .pay-col{padding:18px 22px; border-right:1px solid var(--slate-line);}
+  .pay-col:last-child{border-right:none;}
+  .pay-section-title{font-size:11.5px; font-weight:700; color:var(--slate); text-transform:uppercase; letter-spacing:.5px; margin:14px 0 8px;}
+  .pay-section-title:first-child{margin-top:0;}
+  .pay-cash-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  .pay-cash-grid button{
+    padding:14px 4px; border-radius:10px; border:none; background:var(--ink); color:var(--paper);
+    font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:14px; cursor:pointer;
+  }
+  .pay-cash-grid button.exact{background:var(--ember);}
+  .pay-other-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+  .pay-other-btn{
+    padding:14px 2px; border-radius:10px; border:1.5px solid var(--slate-line); background:var(--white);
+    font-size:11px; font-weight:700; color:var(--ink); cursor:pointer; text-align:center; line-height:1.6;
+  }
+  .pay-card{background:var(--herb); color:white; border-color:var(--herb);}
+  .pay-entered{
+    background:var(--white); border:1.5px solid var(--slate-line); border-radius:10px; padding:12px 14px;
+    font-family:'IBM Plex Mono',monospace; font-size:20px; font-weight:700; margin-bottom:12px;
+  }
+  .pay-keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  .pay-keypad button{
+    aspect-ratio:1.5; border-radius:10px; border:1.5px solid var(--slate-line); background:var(--white);
+    font-family:'IBM Plex Mono',monospace; font-size:18px; font-weight:600; cursor:pointer;
+  }
+  .pay-final-row{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;}
+  .pay-final-btn{
+    padding:14px 4px; border-radius:10px; border:none; font-weight:700; font-size:13px; cursor:pointer; line-height:1.4;
+  }
+  .pay-exact{background:var(--ink); color:var(--paper);}
+  .pay-change{background:var(--herb); color:white;}
+  .pay-bottom{
+    display:flex; border-top:1.5px solid var(--slate-line); background:var(--white);
+  }
+  .pay-bottom button{
+    flex:1; padding:14px; border:none; background:transparent; border-right:1px solid var(--slate-line);
+    font-weight:700; font-size:13px; color:var(--slate); cursor:pointer;
+  }
+  .pay-bottom button:last-child{border-right:none;}
+  .pay-bottom button:active{background:var(--paper);}
+  .adj-badge{font-size:10px; color:var(--herb); display:block; margin-top:2px;}
+
   ::-webkit-scrollbar{width:8px;}
   ::-webkit-scrollbar-thumb{background:var(--slate-line); border-radius:4px;}
 </style>
@@ -823,6 +887,45 @@
 <!-- Payment / info modal -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal" id="modalContent"></div>
+</div>
+
+<!-- ============ FULL PAYMENT SCREEN ============ -->
+<div class="pay-overlay" id="payOverlay">
+  <div class="pay-screen">
+    <div class="pay-top">
+      <span class="pay-top-label">应付</span>
+      <span class="pay-top-amount">$<span id="payDue">0.00</span></span>
+      <button class="pay-close" onclick="closePaymentScreen()">✕</button>
+    </div>
+    <div class="pay-body">
+      <div class="pay-col">
+        <div class="pay-section-title">现金 Cash</div>
+        <div class="pay-cash-grid" id="payCashGrid"></div>
+        <div class="pay-section-title">刷卡 &amp; 其他 Card &amp; Other</div>
+        <div class="pay-other-grid">
+          <button class="pay-other-btn pay-card" onclick="startCardPayment()">💳<br>刷卡 Card</button>
+          <button class="pay-other-btn" onclick="stubPayment('礼品卡 Gift Card')">🎁<br>礼品卡</button>
+          <button class="pay-other-btn" onclick="applyVipDiscount()">⭐<br>VIP</button>
+          <button class="pay-other-btn" onclick="stubPayment('退款 Refund')">↩️<br>Refund</button>
+        </div>
+      </div>
+      <div class="pay-col">
+        <div class="pay-section-title">输入现金 Enter Cash</div>
+        <div class="pay-entered">已付 $<span id="payEntered">0.00</span></div>
+        <div class="pay-keypad" id="payKeypad"></div>
+        <div class="pay-final-row">
+          <button class="pay-final-btn pay-exact" onclick="finalizeCash('exact')">一键付款<br>Pay Exact</button>
+          <button class="pay-final-btn pay-change" onclick="finalizeCash('change')">找零<br>Change</button>
+        </div>
+      </div>
+    </div>
+    <div class="pay-bottom">
+      <button onclick="closePaymentScreen()">取消 Cancel</button>
+      <button onclick="openAdjustModal('surcharge')">加收 Surcharge</button>
+      <button onclick="openAdjustModal('discount')">折扣 Discount</button>
+      <button onclick="openAdjustModal('tip')">小费 Tip</button>
+    </div>
+  </div>
 </div>
 
 <!-- Hidden print-only kitchen ticket -->
@@ -1527,11 +1630,12 @@ function renderTicket(){
 
       const row = document.createElement('div');
       row.className = 'line' + (line.id===selectedLineId ? ' selected':'');
-      const hasExtra = line.note || line.modifier;
+      const extras = [line.modifier ? '🧂 '+line.modifier : '', line.note ? '📝 '+line.note : ''].filter(Boolean);
       row.innerHTML = `
         <div class="line-tap" onclick="toggleSelectLine(${line.id})">
           <div class="line-main">
-            <div class="line-name">${line.qty} × ${line.name}${hasExtra ? ' <span class=\"line-flag\">📝</span>' : ''}</div>
+            <div class="line-name">${line.qty} × ${line.name}</div>
+            ${extras.length ? `<div class="line-detail">${extras.join(' · ')}</div>` : ''}
           </div>
           <div class="line-price">$${(line.price*line.qty).toFixed(2)}</div>
         </div>
@@ -1552,12 +1656,6 @@ function renderTicket(){
           <button onclick="openPriceModal(${line.id})"><span class="la-icon">💲</span>改价</button>
         `;
         ticketBody.appendChild(panel);
-        if(line.note || line.modifier){
-          const detail = document.createElement('div');
-          detail.className = 'line-detail';
-          detail.innerHTML = `${line.modifier?`<div>🧂 ${line.modifier}</div>`:''}${line.note?`<div>📝 ${line.note}</div>`:''}`;
-          ticketBody.appendChild(detail);
-        }
       }
     });
   }
@@ -1617,30 +1715,7 @@ function printKitchenTicket(){
 }
 
 document.getElementById('payBtn').onclick = ()=>{
-  const overlay = document.getElementById('modalOverlay');
-  const content = document.getElementById('modalContent');
-  overlay.classList.add('show');
-  content.innerHTML = `
-    <div class="spinner"></div>
-    <h3>请在读卡器上刷卡</h3>
-    <p>Square Terminal 正在等待付款 — Total ${document.getElementById('total').textContent}</p>
-  `;
-  setTimeout(async ()=>{
-    orderStatus = 'paid';
-    saveCustomerHistory(orderMeta, order);
-    await finalizePaidOrder();
-    content.innerHTML = `
-      <div class="checkmark">✓</div>
-      <h3>支付成功</h3>
-      <p>已通过 Square Terminal 收款 ${document.getElementById('total').textContent}，收据已从设备打印</p>
-      <button class="modal-close" onclick="closeModal()">完成 Done</button>
-    `;
-    const banner = document.getElementById('statusBanner');
-    banner.className = 'status-banner show status-paid';
-    banner.textContent = '✓ 已支付完成';
-    document.getElementById('newBtn').style.display = 'flex';
-    renderTicket();
-  }, 2200);
+  openPaymentScreen();
 };
 
 document.getElementById('newBtn').onclick = ()=>{
@@ -1854,16 +1929,172 @@ async function updateOrderInDB(dbOrderId, patch){
   const {error} = await db.from('orders').update(patch).eq('id', dbOrderId);
   if(error) console.error('updateOrderInDB error', error);
 }
-async function finalizePaidOrder(){
-  const {subtotal, tax, total} = calcTotal(order);
+async function finalizePaidOrder(paymentInfo){
+  paymentInfo = paymentInfo || {method:'card', discount:0, surcharge:0, tip:0, cashReceived:null, changeDue:null};
+  const {subtotal, tax} = calcTotal(order);
+  const total = subtotal + tax - paymentInfo.discount + paymentInfo.surcharge + paymentInfo.tip;
   completedOrders.push({
     id: currentOrderNo, type: orderMeta.type, label: contextLabel(),
     items: order.map(l=>({...l})), subtotal, tax, total, timestamp: new Date()
   });
   await updateOrderInDB(currentOrderNo, {
-    status:'paid', subtotal, tax, total, paid_at: new Date().toISOString()
+    status:'paid', subtotal, tax, total, paid_at: new Date().toISOString(),
+    payment_method: paymentInfo.method,
+    discount_amount: paymentInfo.discount, surcharge_amount: paymentInfo.surcharge, tip_amount: paymentInfo.tip,
+    cash_received: paymentInfo.cashReceived, change_due: paymentInfo.changeDue
   });
   await syncOrderItems(currentOrderNo);
+  return total;
+}
+
+/* ===================== FULL PAYMENT SCREEN ===================== */
+let payAdjustments = {discount:0, surcharge:0, tip:0};
+let payCashCents = 0; // cash amount currently being entered, in cents
+
+function baseOrderTotal(){
+  return calcTotal(order).total;
+}
+function amountDue(){
+  const t = baseOrderTotal() - payAdjustments.discount + payAdjustments.surcharge + payAdjustments.tip;
+  return Math.max(0, t);
+}
+
+function openPaymentScreen(){
+  payAdjustments = {discount:0, surcharge:0, tip:0};
+  payCashCents = 0;
+  renderPayDue();
+  renderPayCashGrid();
+  renderPayKeypad();
+  updatePayEnteredDisplay();
+  document.getElementById('payOverlay').classList.add('show');
+}
+function closePaymentScreen(){
+  document.getElementById('payOverlay').classList.remove('show');
+}
+function renderPayDue(){
+  document.getElementById('payDue').textContent = amountDue().toFixed(2);
+}
+function renderPayCashGrid(){
+  const due = amountDue();
+  const amounts = [due];
+  const nickel = Math.ceil(due*20)/20; if(nickel>due) amounts.push(nickel);
+  const quarter = Math.ceil(due*4)/4; if(quarter>due && !amounts.includes(quarter)) amounts.push(quarter);
+  const dollar = Math.ceil(due); if(dollar>due && !amounts.includes(dollar)) amounts.push(dollar);
+  [5,10,20,50,100].forEach(bill=>{ if(bill>due && amounts.length<8 && !amounts.includes(bill)) amounts.push(bill); });
+  const grid = document.getElementById('payCashGrid');
+  grid.innerHTML = amounts.slice(0,8).map((amt,i)=>
+    `<button class="${i===0?'exact':''}" onclick="selectCashAmount(${amt})">$${amt.toFixed(2)}</button>`
+  ).join('');
+}
+function selectCashAmount(amt){
+  payCashCents = Math.round(amt*100);
+  updatePayEnteredDisplay();
+}
+function renderPayKeypad(){
+  const pad = document.getElementById('payKeypad');
+  const keys = ['1','2','3','4','5','6','7','8','9','00','0','⌫'];
+  pad.innerHTML = keys.map(k=>`<button onclick="payKeyPress('${k}')">${k}</button>`).join('');
+}
+function payKeyPress(k){
+  if(k==='⌫'){ payCashCents = Math.floor(payCashCents/10); }
+  else if(k==='00'){ payCashCents = payCashCents*100; }
+  else { payCashCents = payCashCents*10 + parseInt(k); }
+  updatePayEnteredDisplay();
+}
+function updatePayEnteredDisplay(){
+  document.getElementById('payEntered').textContent = (payCashCents/100).toFixed(2);
+}
+
+function stubPayment(label){
+  alert(`${label} 功能尚未接入真实系统，需要连接对应的服务后才能使用。\nNot yet integrated with a real backend.`);
+}
+function applyVipDiscount(){
+  payAdjustments.discount = Math.round(baseOrderTotal()*0.10*100)/100;
+  renderPayDue();
+  alert('已应用 VIP 9折优惠(演示用途，实际折扣规则可在后台调整)\nVIP 10% discount applied (demo — configurable later)');
+}
+
+function openAdjustModal(kind){
+  const labels = {discount:'折扣 Discount', surcharge:'加收 Surcharge', tip:'小费 Tip'};
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  overlay.classList.add('show');
+  content.innerHTML = `
+    <h3>${labels[kind]}</h3>
+    <p>输入金额(美元)Enter a dollar amount</p>
+    <div class="field"><input type="number" step="0.01" min="0" id="adjInput" value="${payAdjustments[kind]||''}" placeholder="e.g. 2.00" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px; text-align:center;"></div>
+    <button class="modal-close" onclick="saveAdjust('${kind}')">保存 Save</button>
+  `;
+  setTimeout(()=>document.getElementById('adjInput')?.focus(), 100);
+}
+function saveAdjust(kind){
+  const val = parseFloat(document.getElementById('adjInput').value) || 0;
+  payAdjustments[kind] = val;
+  renderPayDue();
+  renderPayCashGrid();
+  closeModal();
+}
+
+async function finalizeCash(mode){
+  const due = amountDue();
+  let received, change;
+  if(mode==='exact'){
+    received = due; change = 0;
+  } else {
+    received = payCashCents/100;
+    if(received < due){ alert('收到的现金不够 Cash received is less than amount due'); return; }
+    change = Math.round((received - due)*100)/100;
+  }
+  orderStatus = 'paid';
+  saveCustomerHistory(orderMeta, order);
+  await finalizePaidOrder({method:'cash', ...payAdjustments, cashReceived:received, changeDue:change});
+  closePaymentScreen();
+  showPaymentSuccess(`现金收款 $${received.toFixed(2)}${change>0?`，找零 $${change.toFixed(2)}`:''}`);
+}
+
+function startCardPayment(){
+  const due = amountDue();
+  closePaymentScreen();
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  overlay.classList.add('show');
+  content.innerHTML = `
+    <div class="spinner"></div>
+    <h3>请在读卡器上刷卡</h3>
+    <p>Square Terminal 正在等待付款 — Total $${due.toFixed(2)}</p>
+  `;
+  setTimeout(async ()=>{
+    orderStatus = 'paid';
+    saveCustomerHistory(orderMeta, order);
+    await finalizePaidOrder({method:'card', ...payAdjustments, cashReceived:null, changeDue:null});
+    content.innerHTML = `
+      <div class="checkmark">✓</div>
+      <h3>支付成功</h3>
+      <p>已通过 Square Terminal 收款 $${due.toFixed(2)}，收据已从设备打印</p>
+      <button class="modal-close" onclick="closeModal()">完成 Done</button>
+    `;
+    const banner = document.getElementById('statusBanner');
+    banner.className = 'status-banner show status-paid';
+    banner.textContent = '✓ 已支付完成';
+    document.getElementById('newBtn').style.display = 'flex';
+    renderTicket();
+  }, 2200);
+}
+function showPaymentSuccess(message){
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  overlay.classList.add('show');
+  content.innerHTML = `
+    <div class="checkmark">✓</div>
+    <h3>支付成功</h3>
+    <p>${message}</p>
+    <button class="modal-close" onclick="closeModal()">完成 Done</button>
+  `;
+  const banner = document.getElementById('statusBanner');
+  banner.className = 'status-banner show status-paid';
+  banner.textContent = '✓ 已支付完成';
+  document.getElementById('newBtn').style.display = 'flex';
+  renderTicket();
 }
 
 /* ===================== ADMIN: PIN GATE ===================== */
