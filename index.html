@@ -319,29 +319,47 @@
 
   /* ================= RECALL ================= */
   #screen-recall{background:var(--paper); flex-direction:column;}
-  .recall-filters{padding:16px 40px 4px; display:flex; flex-direction:column; gap:10px;}
-  .recall-filter-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
-  .rf-label{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--slate); text-transform:uppercase; letter-spacing:.5px; width:70px; flex-shrink:0;}
+  .recall-layout{flex:1; display:flex; flex-direction:row; overflow:hidden;}
+  .recall-main{flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0;}
+  .recall-date-row{padding:16px 24px 4px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
   .rf-chip{
     background:var(--white); border:1.5px solid var(--slate-line); border-radius:16px;
     padding:6px 14px; font-size:12.5px; font-weight:600; color:var(--slate); cursor:pointer;
   }
   .rf-chip.active{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+  .recall-sidebar{
+    width:220px; flex-shrink:0; background:var(--white); border-left:1.5px solid var(--slate-line);
+    padding:18px 16px; overflow-y:auto; display:flex; flex-direction:column; gap:18px;
+  }
   .rf-search{
-    width:100%; padding:10px 14px; border:1.5px solid var(--slate-line); border-radius:10px;
-    font-size:13.5px; background:var(--white);
+    width:100%; padding:10px 12px; border:1.5px solid var(--slate-line); border-radius:10px;
+    font-size:13px; background:var(--paper);
   }
-  .recall-list{
-    flex:1; overflow-y:auto; padding:12px 40px 20px; display:flex; flex-direction:column; gap:12px;
+  .rf-side-title{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--slate); text-transform:uppercase; letter-spacing:.8px; margin-bottom:8px;}
+  .rf-side-chips{display:flex; flex-direction:column; gap:6px;}
+  .rf-side-chips .rf-chip{text-align:left; width:100%; border-radius:9px;}
+
+  .recall-grid{
+    flex:1; overflow-y:auto; padding:12px 24px 20px;
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:12px; align-content:start;
   }
-  .recall-item{
+  .recall-card{
     background:var(--white); border:1.5px solid var(--slate-line); border-radius:14px;
-    padding:16px 20px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;
+    padding:14px 12px; cursor:pointer; aspect-ratio:1; display:flex; flex-direction:column;
+    justify-content:space-between; overflow:hidden;
   }
-  .recall-item .ri-main{font-weight:700; font-size:15px;}
-  .recall-item .ri-sub{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--slate); margin-top:3px;}
-  .recall-item .ri-total{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--amber-dark);}
-  .recall-empty{color:var(--slate); text-align:center; margin-top:60px; font-size:14px;}
+  .recall-card .rc-status{
+    align-self:flex-start; font-size:9.5px; font-weight:700; padding:2px 8px; border-radius:10px;
+    text-transform:uppercase; letter-spacing:.3px;
+  }
+  .rc-status.unpaid{background:#EFE3C4; color:var(--amber-dark);}
+  .rc-status.paid{background:#E3EBE3; color:var(--herb);}
+  .rc-status.held{background:#E8E2F0; color:#6B5A94;}
+  .rc-status.cancelled{background:#F3E3DC; color:var(--ember);}
+  .recall-card .rc-main{font-weight:700; font-size:14px; line-height:1.3; margin-top:6px;}
+  .recall-card .rc-sub{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--slate); margin-top:4px;}
+  .recall-card .rc-total{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--amber-dark); font-size:15px; margin-top:auto;}
+  .recall-empty{color:var(--slate); text-align:center; margin-top:60px; font-size:14px; grid-column:1/-1;}
 
   /* ================= ORDER SCREEN ================= */
   #screen-order{
@@ -806,8 +824,13 @@
     <button class="back-btn" onclick="goHome()">← 返回 Back</button>
     <h1>调出订单 Recall Orders</h1>
   </div>
-  <div class="recall-filters" id="recallFilters"></div>
-  <div class="recall-list" id="recallList"></div>
+  <div class="recall-layout">
+    <div class="recall-main">
+      <div class="recall-date-row" id="recallDateRow"></div>
+      <div class="recall-grid" id="recallList"></div>
+    </div>
+    <div class="recall-sidebar" id="recallSidebar"></div>
+  </div>
 </div>
 
 <!-- ============ ORDER SCREEN ============ -->
@@ -1261,44 +1284,52 @@ function startOrderFromForm(){
 let recallFilters = { range:'today', status:'unpaid', type:'all', search:'' };
 function goRecall(){
   showScreen('screen-recall');
-  renderRecallFilters();
+  renderRecallDateRow();
+  renderRecallSidebar();
   runRecallSearch();
 }
-function renderRecallFilters(){
-  const wrap = document.getElementById('recallFilters');
+function renderRecallDateRow(){
+  const wrap = document.getElementById('recallDateRow');
   const ranges = [['today','今天 Today'],['yesterday','昨天 Yesterday'],['week','本周 This Week'],['month','本月 This Month'],['all','全部 All']];
+  wrap.innerHTML = ranges.map(([k,l])=>`<button class="rf-chip ${recallFilters.range===k?'active':''}" onclick="setRecallFilter('range','${k}')">${l}</button>`).join('');
+}
+function renderRecallSidebar(){
+  const wrap = document.getElementById('recallSidebar');
   const statuses = [['unpaid','未结 Unpaid'],['paid','已结 Paid'],['open','待处理 Open'],['fired','厨房中 Fired'],['held','已暂存 Held'],['all','全部 All']];
-  const types = [['all','全部 All'],['dine-in','堂食'],['to-go','外带'],['pickup','自取'],['delivery','外送']];
+  const types = [['all','全部 All'],['dine-in','堂食 Dine In'],['to-go','外带 To Go'],['pickup','自取 Pick Up'],['delivery','外送 Delivery']];
   wrap.innerHTML = `
-    <div class="recall-filter-row">
-      <span class="rf-label">日期 Date</span>
-      ${ranges.map(([k,l])=>`<button class="rf-chip ${recallFilters.range===k?'active':''}" onclick="setRecallFilter('range','${k}')">${l}</button>`).join('')}
+    <div>
+      <input type="text" class="rf-search" id="rfSearch" placeholder="搜索电话/姓名/桌号..." value="${recallFilters.search}" oninput="setRecallFilter('search', this.value)">
     </div>
-    <div class="recall-filter-row">
-      <span class="rf-label">状态 Status</span>
-      ${statuses.map(([k,l])=>`<button class="rf-chip ${recallFilters.status===k?'active':''}" onclick="setRecallFilter('status','${k}')">${l}</button>`).join('')}
+    <div>
+      <div class="rf-side-title">状态 Status</div>
+      <div class="rf-side-chips">
+        ${statuses.map(([k,l])=>`<button class="rf-chip ${recallFilters.status===k?'active':''}" onclick="setRecallFilter('status','${k}')">${l}</button>`).join('')}
+      </div>
     </div>
-    <div class="recall-filter-row">
-      <span class="rf-label">类型 Type</span>
-      ${types.map(([k,l])=>`<button class="rf-chip ${recallFilters.type===k?'active':''}" onclick="setRecallFilter('type','${k}')">${l}</button>`).join('')}
-    </div>
-    <div class="recall-filter-row">
-      <input type="text" class="rf-search" id="rfSearch" placeholder="搜索电话/姓名/桌号 Search phone, name, table..." value="${recallFilters.search}" oninput="setRecallFilter('search', this.value)">
+    <div>
+      <div class="rf-side-title">类型 Type</div>
+      <div class="rf-side-chips">
+        ${types.map(([k,l])=>`<button class="rf-chip ${recallFilters.type===k?'active':''}" onclick="setRecallFilter('type','${k}')">${l}</button>`).join('')}
+      </div>
     </div>
   `;
 }
 function setRecallFilter(key, val){
   recallFilters[key] = val;
-  renderRecallFilters();
+  renderRecallDateRow();
+  renderRecallSidebar();
+  document.getElementById('rfSearch').focus();
+  const el = document.getElementById('rfSearch');
+  if(el) el.setSelectionRange(el.value.length, el.value.length);
   runRecallSearch();
 }
 async function runRecallSearch(){
   const list = document.getElementById('recallList');
-  list.innerHTML = `<p style="color:var(--slate); font-size:13.5px; text-align:center; margin-top:30px;">加载中... Loading...</p>`;
+  list.innerHTML = `<p style="color:var(--slate); font-size:13.5px; text-align:center; margin-top:30px; grid-column:1/-1;">加载中... Loading...</p>`;
 
   let query = db.from('orders').select('*, order_items(*)').order('created_at', {ascending:false}).limit(100);
 
-  const now = new Date();
   if(recallFilters.range==='today'){
     const start = new Date(); start.setHours(0,0,0,0);
     query = query.gte('created_at', start.toISOString());
@@ -1321,7 +1352,7 @@ async function runRecallSearch(){
 
   const {data: orders, error} = await query;
   if(error){
-    list.innerHTML = `<p style="color:var(--ember); font-size:13.5px; text-align:center; margin-top:30px;">加载失败 Failed to load: ${error.message}</p>`;
+    list.innerHTML = `<p style="color:var(--ember); font-size:13.5px; text-align:center; margin-top:30px; grid-column:1/-1;">加载失败 Failed to load: ${error.message}</p>`;
     return;
   }
 
@@ -1342,25 +1373,25 @@ async function runRecallSearch(){
   }
 
   const statusLabel = {open:'待处理',fired:'厨房中',held:'已暂存',paid:'已结',cancelled:'已取消'};
+  const statusClass = {open:'unpaid',fired:'unpaid',held:'held',paid:'paid',cancelled:'cancelled'};
   list.innerHTML = '';
   filtered.forEach(o=>{
-    const label = o.type==='dine-in' ? `桌 ${o.table_label}` : `${o.customer_name||'Guest'} · ${o.type.toUpperCase()}`;
+    const label = o.type==='dine-in' ? `桌 ${o.table_label}` : `${o.customer_name||'Guest'}`;
     const time = new Date(o.created_at).toLocaleString('en-US',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-    const row = document.createElement('div');
-    row.className = 'recall-item';
-    row.innerHTML = `
-      <div>
-        <div class="ri-main">${label} <span style="color:var(--slate); font-weight:400; font-size:12px;">#${o.order_number} · ${statusLabel[o.status]||o.status}</span></div>
-        <div class="ri-sub">${o.order_items.length} 项菜品 · ${time}${o.customer_phone?' · 📞 '+o.customer_phone:''}</div>
-      </div>
-      <div class="ri-total">$${parseFloat(o.total||0).toFixed(2)}</div>
+    const card = document.createElement('div');
+    card.className = 'recall-card';
+    card.innerHTML = `
+      <span class="rc-status ${statusClass[o.status]||''}">${statusLabel[o.status]||o.status}</span>
+      <div class="rc-main">${label}</div>
+      <div class="rc-sub">#${o.order_number} · ${o.order_items.length}项<br>${time}</div>
+      <div class="rc-total">$${parseFloat(o.total||0).toFixed(2)}</div>
     `;
     if(o.status!=='paid' && o.status!=='cancelled'){
-      row.onclick = ()=> resumeOrderFromDB(o.id);
+      card.onclick = ()=> resumeOrderFromDB(o.id);
     } else {
-      row.style.cursor = 'default';
+      card.style.cursor = 'default';
     }
-    list.appendChild(row);
+    list.appendChild(card);
   });
 }
 async function resumeOrderFromDB(dbOrderId){
