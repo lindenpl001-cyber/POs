@@ -367,8 +367,8 @@
     padding:16px 0; gap:6px; overflow-y:auto;
   }
   #screen-order.layout-top .rail{
-    flex-direction:row; align-items:center; padding:12px 20px; gap:8px;
-    overflow-x:auto; overflow-y:hidden;
+    flex-direction:row; flex-wrap:wrap; align-items:flex-start; align-content:flex-start;
+    padding:10px 20px; gap:8px; max-height:118px; overflow-y:auto; overflow-x:hidden;
   }
   .rail-back{
     width:76px; padding:10px 4px; background:transparent; border:none; border-radius:12px;
@@ -383,16 +383,16 @@
     flex-shrink:0;
   }
   #screen-order.layout-top .cat-btn{
-    width:auto; flex-direction:row; padding:10px 16px; white-space:nowrap; border-radius:20px;
+    width:auto; flex-direction:row; padding:9px 15px; white-space:nowrap; border-radius:20px;
   }
   .cat-btn .dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.55;}
   .cat-btn.active{background:var(--amber); color:var(--ink);}
   .cat-btn.active .dot{opacity:1;}
 
   .menu{grid-area:menu; background:var(--paper); padding:20px 24px 24px; overflow-y:auto;}
-  .group-tabs{display:flex; gap:8px; margin-bottom:14px; overflow-x:auto; padding-bottom:2px;}
+  .group-tabs{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
   .group-tab{
-    flex-shrink:0; padding:8px 18px; border-radius:20px; border:1.5px solid var(--slate-line);
+    padding:8px 18px; border-radius:20px; border:1.5px solid var(--slate-line);
     background:var(--white); color:var(--slate); font-weight:700; font-size:13px; cursor:pointer;
   }
   .group-tab.active{background:var(--ink); color:var(--paper); border-color:var(--ink);}
@@ -425,6 +425,15 @@
   .ticket-head .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:1.5px; color:var(--slate); text-transform:uppercase;}
   .ticket-head h2{font-family:'Fraunces',serif; font-size:19px; font-weight:700; margin-top:3px;}
   .ticket-head .ctx-detail{font-size:11.5px; color:var(--slate); margin-top:4px;}
+  .info-rail{display:flex; gap:6px; margin-top:10px;}
+  .info-icon{
+    flex:1; background:var(--paper); border:1px solid var(--slate-line); border-radius:10px;
+    padding:7px 4px; display:flex; flex-direction:column; align-items:center; gap:1px;
+    cursor:pointer;
+  }
+  .info-icon .ii-icon{font-size:14px;}
+  .info-icon .ii-label{font-size:8.5px; color:var(--slate); text-transform:uppercase; letter-spacing:.5px;}
+  .info-icon .ii-val{font-size:11px; font-weight:700; color:var(--ink); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .ticket-body{flex:1; overflow-y:auto; padding:6px 16px;}
   .empty-state{height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--slate); text-align:center; padding:20px; gap:6px;}
   .empty-state .big{font-family:'Fraunces',serif; font-size:16px; color:var(--ink); font-weight:600;}
@@ -720,6 +729,17 @@
         <div class="eyebrow" id="ticketNo">ORDER · 待下单</div>
         <h2 id="ticketTitle">新订单</h2>
         <div class="ctx-detail" id="ticketCtxDetail"></div>
+        <div class="info-rail">
+          <button class="info-icon" onclick="openServerModal()">
+            <span class="ii-icon">👤</span><span class="ii-label">Server</span><span class="ii-val" id="infoServer">--</span>
+          </button>
+          <button class="info-icon" onclick="openGuestModal()">
+            <span class="ii-icon">👥</span><span class="ii-label">Guest</span><span class="ii-val" id="infoGuest">--</span>
+          </button>
+          <button class="info-icon" onclick="openNoteModal()">
+            <span class="ii-icon">📝</span><span class="ii-label">Note</span><span class="ii-val" id="infoNote">--</span>
+          </button>
+        </div>
       </div>
       <div class="status-banner" id="statusBanner"></div>
       <div class="ticket-body" id="ticketBody"></div>
@@ -1210,7 +1230,8 @@ async function resumeOrderFromDB(dbOrderId){
   if(error){ alert('读取订单失败 Failed to load order: '+error.message); return; }
   orderMeta = {
     type: o.type, orderNo: o.order_number,
-    table: o.table_label, name: o.customer_name, phone: o.customer_phone, address: o.customer_address
+    table: o.table_label, name: o.customer_name, phone: o.customer_phone, address: o.customer_address,
+    serverName: o.server_name || o.staff_name, guestCount: o.guest_count, note: o.order_note || ''
   };
   order = o.order_items.map(it=>({id: idSeq++, name:it.name, price:parseFloat(it.price), qty:it.qty, note:it.note||''}));
   orderStatus = o.status==='paid' ? 'paid' : (o.status==='fired' ? 'fired' : 'open');
@@ -1222,7 +1243,7 @@ async function resumeOrderFromDB(dbOrderId){
 async function startNewOrder(meta){
   const dbOrder = await createOrderInDB(meta);
   if(!dbOrder) return;
-  orderMeta = {...meta, orderNo: dbOrder.order_number};
+  orderMeta = {...meta, orderNo: dbOrder.order_number, serverName: staffName, guestCount: null, note: ''};
   order = [];
   orderStatus = 'open';
   currentOrderNo = dbOrder.id;
@@ -1340,6 +1361,10 @@ function renderTicket(){
   const statusText = {open:'待下单', fired:'已送厨房', paid:'已支付'}[orderStatus] || '待下单';
   document.getElementById('ticketNo').textContent = orderMeta ? `ORDER #${orderMeta.orderNo} · ${statusText}` : 'ORDER · 待下单';
 
+  document.getElementById('infoServer').textContent = orderMeta?.serverName || '--';
+  document.getElementById('infoGuest').textContent = orderMeta?.guestCount ? orderMeta.guestCount : '--';
+  document.getElementById('infoNote').textContent = orderMeta?.note ? orderMeta.note : '--';
+
   const ticketBody = document.getElementById('ticketBody');
   if(order.length===0){
     ticketBody.innerHTML = `<div class="empty-state"><div class="big">还没有点菜</div><div>点击左侧菜单加入订单</div></div>`;
@@ -1454,6 +1479,68 @@ function closeModal(){
   document.getElementById('modalOverlay').classList.remove('show');
 }
 
+/* ===================== TICKET INFO RAIL (Server / Guest / Note) ===================== */
+function openServerModal(){
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  overlay.classList.add('show');
+  content.innerHTML = `
+    <h3>服务员 Server</h3>
+    <p>这单由谁负责服务?</p>
+    <div class="field"><input type="text" id="serverInput" value="${orderMeta?.serverName || staffName}" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px; text-align:center;"></div>
+    <button class="modal-close" onclick="saveServer()">保存 Save</button>
+  `;
+  setTimeout(()=>document.getElementById('serverInput')?.focus(), 100);
+}
+async function saveServer(){
+  const val = document.getElementById('serverInput').value.trim();
+  if(!val) return;
+  orderMeta.serverName = val;
+  await updateOrderInDB(currentOrderNo, {server_name: val});
+  renderTicket();
+  closeModal();
+}
+
+function openGuestModal(){
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  overlay.classList.add('show');
+  content.innerHTML = `
+    <h3>用餐人数 Guest Count</h3>
+    <p>这单一共几位客人?</p>
+    <div class="field"><input type="number" min="1" id="guestInput" value="${orderMeta?.guestCount || ''}" placeholder="e.g. 4" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px; text-align:center;"></div>
+    <button class="modal-close" onclick="saveGuest()">保存 Save</button>
+  `;
+  setTimeout(()=>document.getElementById('guestInput')?.focus(), 100);
+}
+async function saveGuest(){
+  const val = parseInt(document.getElementById('guestInput').value) || null;
+  orderMeta.guestCount = val;
+  await updateOrderInDB(currentOrderNo, {guest_count: val});
+  renderTicket();
+  closeModal();
+}
+
+function openNoteModal(){
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  overlay.classList.add('show');
+  content.innerHTML = `
+    <h3>订单备注 Order Note</h3>
+    <p>整单的备注(比如"顾客赶时间""过敏提醒"),不是单个菜品的备注</p>
+    <div class="field"><textarea id="noteInput" rows="3" placeholder="e.g. Rush order, customer waiting" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:14px; font-family:'Inter',sans-serif;">${orderMeta?.note || ''}</textarea></div>
+    <button class="modal-close" onclick="saveNote()">保存 Save</button>
+  `;
+  setTimeout(()=>document.getElementById('noteInput')?.focus(), 100);
+}
+async function saveNote(){
+  const val = document.getElementById('noteInput').value.trim();
+  orderMeta.note = val;
+  await updateOrderInDB(currentOrderNo, {order_note: val});
+  renderTicket();
+  closeModal();
+}
+
 /* ===================== ORDER PERSISTENCE (Supabase) =====================
    Orders are saved to the database the moment they're created (not just at
    payment), so table occupancy, held orders, and order lookup all survive
@@ -1466,7 +1553,8 @@ async function createOrderInDB(meta){
     customer_phone: meta.phone || null,
     customer_address: meta.address || null,
     status: 'open',
-    staff_name: staffName
+    staff_name: staffName,
+    server_name: staffName
   }).select().single();
   if(error){ console.error('createOrderInDB error', error); alert('创建订单失败，请检查网络 Failed to create order'); return null; }
   return data;
