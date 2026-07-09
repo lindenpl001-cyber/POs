@@ -413,28 +413,23 @@
 
   .ticket-wrap{grid-area:ticket; background:#DCD3BA; display:flex; flex-direction:column; padding:16px 14px;}
   .ticket{
-    background:var(--white); border-radius:6px; flex:1; display:flex; flex-direction:column;
+    background:var(--white); border-radius:6px; flex:1; display:flex; flex-direction:row;
     overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,.18); position:relative;
   }
   .ticket::before{
     content:""; position:absolute; top:0; left:0; right:0; height:8px;
     background-image:radial-gradient(circle at 8px 4px, #DCD3BA 4px, transparent 4.5px);
-    background-size:16px 8px; background-repeat:repeat-x;
+    background-size:16px 8px; background-repeat:repeat-x; z-index:2;
   }
-  .ticket-head{padding:18px 16px 10px; border-bottom:1.5px dashed var(--slate-line);}
-  .ticket-head .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:1.5px; color:var(--slate); text-transform:uppercase;}
-  .ticket-head h2{font-family:'Fraunces',serif; font-size:19px; font-weight:700; margin-top:3px;}
-  .ticket-head .ctx-detail{font-size:11.5px; color:var(--slate); margin-top:4px;}
-  .info-rail{display:flex; gap:6px; margin-top:10px;}
-  .info-icon{
-    flex:1; background:var(--paper); border:1px solid var(--slate-line); border-radius:10px;
-    padding:7px 4px; display:flex; flex-direction:column; align-items:center; gap:1px;
-    cursor:pointer;
-  }
-  .info-icon .ii-icon{font-size:14px;}
-  .info-icon .ii-label{font-size:8.5px; color:var(--slate); text-transform:uppercase; letter-spacing:.5px;}
-  .info-icon .ii-val{font-size:11px; font-weight:700; color:var(--ink); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .ticket-body{flex:1; overflow-y:auto; padding:6px 16px;}
+  .ticket-main{flex:1; display:flex; flex-direction:column; min-width:0;}
+
+  /* Compact display-only header — small font, only shows fields that are actually set */
+  .ticket-head{padding:14px 16px 8px;}
+  .ticket-head .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:1.2px; color:var(--slate); text-transform:uppercase;}
+  .ctx-line{font-size:10.5px; color:var(--slate); margin-top:3px; line-height:1.5; display:flex; flex-wrap:wrap; gap:5px 10px;}
+  .ctx-line b{color:var(--ink); font-weight:700;}
+
+  .ticket-body{flex:1; overflow-y:auto; padding:6px 16px; border-top:1.5px dashed var(--slate-line); border-bottom:1.5px dashed var(--slate-line);}
   .empty-state{height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--slate); text-align:center; padding:20px; gap:6px;}
   .empty-state .big{font-family:'Fraunces',serif; font-size:16px; color:var(--ink); font-weight:600;}
   .line{display:flex; align-items:flex-start; gap:9px; padding:11px 0; border-bottom:1px solid #EFEAE0;}
@@ -447,19 +442,44 @@
   .line-price{font-family:'IBM Plex Mono',monospace; font-size:12.5px; font-weight:600; color:var(--slate); white-space:nowrap;}
   .line-remove{background:none;border:none;color:var(--slate); font-size:15px; cursor:pointer; padding:2px 3px;}
   .note-input{width:100%; margin-top:5px; font-size:11.5px; border:1px solid var(--slate-line); border-radius:6px; padding:5px 7px; background:var(--paper);}
-  .ticket-totals{padding:12px 16px; border-top:1.5px dashed var(--slate-line); font-family:'IBM Plex Mono',monospace; font-size:12.5px;}
+  .ticket-totals{padding:10px 16px; font-family:'IBM Plex Mono',monospace; font-size:12.5px;}
   .totals-row{display:flex; justify-content:space-between; padding:2px 0; color:var(--slate);}
   .totals-row.grand{color:var(--ink); font-weight:700; font-size:15px; padding-top:6px;}
-  .ticket-actions{padding:12px 16px 16px; display:flex; flex-direction:column; gap:7px;}
-  .btn{border:none; border-radius:10px; padding:13px; font-weight:700; font-size:13.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;}
+
+  /* Bottom action row — 5 compact icon buttons, one row */
+  .ticket-actions{padding:8px 10px 12px; display:flex; gap:6px;}
+  .tbtn{
+    flex:1; border:1.5px solid var(--slate-line); background:var(--paper); border-radius:10px;
+    padding:9px 2px; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer;
+  }
+  .tbtn .tb-icon{font-size:16px;}
+  .tbtn .tb-label{font-size:10px; font-weight:700; color:var(--ink);}
+  .tbtn:active{transform:scale(.96);}
+  .tbtn-danger{border-color:var(--ember);}
+  .tbtn-danger .tb-label{color:var(--ember);}
+  .tbtn-fire{background:var(--ink); border-color:var(--ink);}
+  .tbtn-fire .tb-label{color:var(--paper);}
+  .tbtn-pay{background:var(--herb); border-color:var(--herb);}
+  .tbtn-pay .tb-label{color:white;}
+  .tbtn:disabled{opacity:.4; cursor:not-allowed;}
+  .btn{border:none; border-radius:10px; padding:13px; font-weight:700; font-size:13.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin:0 16px;}
   .btn:active{transform:scale(.98);}
-  .btn-fire{background:var(--ink); color:var(--paper);}
-  .btn-fire:disabled{background:var(--slate-line); color:var(--slate); cursor:not-allowed;}
-  .btn-pay{background:var(--herb); color:var(--white);}
-  .btn-pay:disabled{background:var(--slate-line); color:var(--slate); cursor:not-allowed;}
   .btn-print{background:transparent; color:var(--ink); border:1.5px solid var(--slate-line);}
-  .btn-hold{background:transparent; color:var(--amber-dark); border:1.5px solid var(--amber);}
   .btn-new{background:transparent; color:var(--ember); border:1.5px solid var(--ember);}
+
+  /* Right-hand vertical rail — Customer Info / Order Type / Change Table / Server / Guest / Note */
+  .ticket-siderail{
+    width:66px; flex-shrink:0; background:var(--ink); display:flex; flex-direction:column;
+  }
+  .sr-btn{
+    flex:1; background:transparent; border:none; border-bottom:1px solid rgba(255,255,255,.08);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    cursor:pointer; color:#B8AE96; padding:4px 2px;
+  }
+  .sr-btn:active{background:rgba(255,255,255,.08);}
+  .sr-btn .sr-icon{font-size:16px;}
+  .sr-btn .sr-label{font-size:9px; font-weight:700; line-height:1.2; text-align:center;}
+
   .status-banner{margin:0 16px 10px; padding:9px 12px; border-radius:8px; font-size:12px; font-weight:600; display:none; align-items:center; gap:6px;}
   .status-banner.show{display:flex;}
   .status-fired{background:#EFE3C4; color:var(--amber-dark);}
@@ -725,36 +745,35 @@
   </div>
   <div class="ticket-wrap">
     <div class="ticket">
-      <div class="ticket-head">
-        <div class="eyebrow" id="ticketNo">ORDER · 待下单</div>
-        <h2 id="ticketTitle">新订单</h2>
-        <div class="ctx-detail" id="ticketCtxDetail"></div>
-        <div class="info-rail">
-          <button class="info-icon" onclick="openServerModal()">
-            <span class="ii-icon">👤</span><span class="ii-label">Server</span><span class="ii-val" id="infoServer">--</span>
-          </button>
-          <button class="info-icon" onclick="openGuestModal()">
-            <span class="ii-icon">👥</span><span class="ii-label">Guest</span><span class="ii-val" id="infoGuest">--</span>
-          </button>
-          <button class="info-icon" onclick="openNoteModal()">
-            <span class="ii-icon">📝</span><span class="ii-label">Note</span><span class="ii-val" id="infoNote">--</span>
-          </button>
+      <div class="ticket-main">
+        <div class="ticket-head">
+          <div class="eyebrow" id="ticketNo">ORDER · 待下单</div>
+          <div class="ctx-line" id="ctxLine"></div>
         </div>
+        <div class="status-banner" id="statusBanner"></div>
+        <div class="ticket-body" id="ticketBody"></div>
+        <div class="ticket-totals">
+          <div class="totals-row"><span>小计 Subtotal</span><span id="subtotal">$0.00</span></div>
+          <div class="totals-row"><span>税 Tax (8%)</span><span id="tax">$0.00</span></div>
+          <div class="totals-row grand"><span>总计 Total</span><span id="total">$0.00</span></div>
+        </div>
+        <div class="ticket-actions">
+          <button class="tbtn" id="exitTicketBtn" onclick="exitOrderToHome()"><span class="tb-icon">🏠</span><span class="tb-label">退出</span></button>
+          <button class="tbtn tbtn-danger" id="cancelBtn"><span class="tb-icon">🗑️</span><span class="tb-label">删单</span></button>
+          <button class="tbtn" id="holdBtn"><span class="tb-icon">💾</span><span class="tb-label">保存</span></button>
+          <button class="tbtn tbtn-pay" id="payBtn" disabled><span class="tb-icon">💳</span><span class="tb-label">付款</span></button>
+          <button class="tbtn tbtn-fire" id="fireBtn"><span class="tb-icon">🔥</span><span class="tb-label">送厨</span></button>
+        </div>
+        <button class="btn btn-print" id="printBtn" style="display:none;">🖨️ 打印小票 Print Ticket</button>
+        <button class="btn btn-new" id="newBtn" style="display:none; margin:0 16px 14px;">＋ 新订单 New Order</button>
       </div>
-      <div class="status-banner" id="statusBanner"></div>
-      <div class="ticket-body" id="ticketBody"></div>
-      <div class="ticket-totals">
-        <div class="totals-row"><span>小计 Subtotal</span><span id="subtotal">$0.00</span></div>
-        <div class="totals-row"><span>税 Tax (8%)</span><span id="tax">$0.00</span></div>
-        <div class="totals-row grand"><span>总计 Total</span><span id="total">$0.00</span></div>
-      </div>
-      <div class="ticket-actions">
-        <button class="btn btn-fire" id="fireBtn">🔥 送到厨房 Send to Kitchen</button>
-        <button class="btn btn-print" id="printBtn" disabled>🖨️ 打印小票 Print Ticket</button>
-        <button class="btn btn-pay" id="payBtn" disabled>💳 刷卡结账 Charge Card</button>
-        <button class="btn btn-hold" id="holdBtn">⏸ 暂存订单 Hold Order</button>
-        <button class="btn btn-new" id="cancelBtn" style="border-color:var(--ember); color:var(--ember);">✕ 取消订单 / 清台 Cancel</button>
-        <button class="btn btn-new" id="newBtn" style="display:none;">＋ 新订单 New Order</button>
+      <div class="ticket-siderail">
+        <button class="sr-btn" onclick="openCustomerInfoModal()"><span class="sr-icon">🪪</span><span class="sr-label">客人<br>信息</span></button>
+        <button class="sr-btn" onclick="openOrderTypeModal()"><span class="sr-icon">📋</span><span class="sr-label">订单<br>类型</span></button>
+        <button class="sr-btn" onclick="openChangeTableModal()"><span class="sr-icon">🪑</span><span class="sr-label">换桌</span></button>
+        <button class="sr-btn" onclick="openServerModal()"><span class="sr-icon">🧑</span><span class="sr-label">服务员</span></button>
+        <button class="sr-btn" onclick="openGuestModal()"><span class="sr-icon">👥</span><span class="sr-label">人数</span></button>
+        <button class="sr-btn" onclick="openNoteModal()"><span class="sr-icon">📝</span><span class="sr-label">备注</span></button>
       </div>
     </div>
   </div>
@@ -1353,17 +1372,27 @@ function calcTotal(items){
 }
 
 /* ===================== TICKET RENDER ===================== */
+function renderCtxLine(){
+  const wrap = document.getElementById('ctxLine');
+  if(!orderMeta){ wrap.innerHTML = ''; return; }
+  const parts = [];
+  const typeLabel = {'dine-in':'Dine In','to-go':'To Go','pickup':'Pick Up','delivery':'Delivery'}[orderMeta.type];
+  parts.push(`<span>${typeLabel}</span>`);
+  if(orderMeta.type==='dine-in' && orderMeta.table) parts.push(`<span>桌 <b>${orderMeta.table}</b></span>`);
+  if(orderMeta.name) parts.push(`<span><b>${orderMeta.name}</b></span>`);
+  if(orderMeta.phone && orderMeta.phone!=='--') parts.push(`<span>📞 ${orderMeta.phone}</span>`);
+  if(orderMeta.address) parts.push(`<span>📍 ${orderMeta.address}</span>`);
+  if(orderMeta.serverName) parts.push(`<span>服务员 <b>${orderMeta.serverName}</b></span>`);
+  if(orderMeta.guestCount) parts.push(`<span>👥 <b>${orderMeta.guestCount}</b></span>`);
+  if(orderMeta.note) parts.push(`<span style="color:var(--ember);">📝 ${orderMeta.note}</span>`);
+  wrap.innerHTML = parts.join('');
+}
 function renderTicket(){
-  document.getElementById('ticketTitle').textContent = orderMeta ? contextLabel() : '新订单';
-  document.getElementById('ticketCtxDetail').textContent = contextDetail();
   document.getElementById('orderContext').textContent = contextLabel();
+  renderCtxLine();
 
   const statusText = {open:'待下单', fired:'已送厨房', paid:'已支付'}[orderStatus] || '待下单';
   document.getElementById('ticketNo').textContent = orderMeta ? `ORDER #${orderMeta.orderNo} · ${statusText}` : 'ORDER · 待下单';
-
-  document.getElementById('infoServer').textContent = orderMeta?.serverName || '--';
-  document.getElementById('infoGuest').textContent = orderMeta?.guestCount ? orderMeta.guestCount : '--';
-  document.getElementById('infoNote').textContent = orderMeta?.note ? orderMeta.note : '--';
 
   const ticketBody = document.getElementById('ticketBody');
   if(order.length===0){
@@ -1418,6 +1447,7 @@ document.getElementById('fireBtn').onclick = async ()=>{
   renderTicket();
   await updateOrderInDB(currentOrderNo, {status:'fired'});
   await syncOrderItems(currentOrderNo);
+  printKitchenTicket();
 };
 
 document.getElementById('holdBtn').onclick = async ()=>{
@@ -1433,7 +1463,7 @@ document.getElementById('cancelBtn').onclick = async ()=>{
   goHome();
 };
 
-document.getElementById('printBtn').onclick = ()=>{
+function printKitchenTicket(){
   document.getElementById('pt-heading').textContent = contextLabel() + ' · 厨房单';
   document.getElementById('pt-order').textContent = `#${orderMeta.orderNo}`;
   document.getElementById('pt-time').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
@@ -1442,7 +1472,7 @@ document.getElementById('printBtn').onclick = ()=>{
   ).join('');
   document.getElementById('pt-total').textContent = document.getElementById('total').textContent;
   window.print();
-};
+}
 
 document.getElementById('payBtn').onclick = ()=>{
   const overlay = document.getElementById('modalOverlay');
@@ -1474,6 +1504,112 @@ document.getElementById('payBtn').onclick = ()=>{
 document.getElementById('newBtn').onclick = ()=>{
   goHome();
 };
+
+/* ===================== TICKET SIDE RAIL (Customer Info / Order Type / Change Table / Server / Guest / Note) ===================== */
+function openCustomerInfoModal(){
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  overlay.classList.add('show');
+  if(orderMeta.type==='dine-in'){
+    content.innerHTML = `
+      <h3>客人信息 Customer Info</h3>
+      <p>堂食订单 · 桌号 ${orderMeta.table}</p>
+      <div class="field"><label style="display:block; font-size:12px; color:var(--slate); margin-bottom:6px;">顾客姓名(可选) Name (optional)</label>
+        <input type="text" id="ciName" value="${orderMeta.name||''}" placeholder="e.g. Smith party" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
+      <div class="field" style="margin-top:10px;"><label style="display:block; font-size:12px; color:var(--slate); margin-bottom:6px;">电话(可选) Phone (optional)</label>
+        <input type="tel" id="ciPhone" value="${orderMeta.phone && orderMeta.phone!=='--' ? orderMeta.phone : ''}" placeholder="e.g. (555) 123-4567" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
+      <button class="modal-close" onclick="saveCustomerInfo()">保存 Save</button>
+    `;
+  } else {
+    content.innerHTML = `
+      <h3>客人信息 Customer Info</h3>
+      <p>${orderMeta.type.toUpperCase()} 订单</p>
+      <div class="field"><label style="display:block; font-size:12px; color:var(--slate); margin-bottom:6px;">顾客姓名 Name</label>
+        <input type="text" id="ciName" value="${orderMeta.name||''}" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
+      <div class="field" style="margin-top:10px;"><label style="display:block; font-size:12px; color:var(--slate); margin-bottom:6px;">电话 Phone</label>
+        <input type="tel" id="ciPhone" value="${orderMeta.phone && orderMeta.phone!=='--' ? orderMeta.phone : ''}" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
+      ${orderMeta.type==='delivery' ? `<div class="field" style="margin-top:10px;"><label style="display:block; font-size:12px; color:var(--slate); margin-bottom:6px;">送餐地址 Address</label>
+        <input type="text" id="ciAddress" value="${orderMeta.address||''}" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>` : ''}
+      <button class="modal-close" onclick="saveCustomerInfo()">保存 Save</button>
+    `;
+  }
+}
+async function saveCustomerInfo(){
+  const name = document.getElementById('ciName').value.trim();
+  const phone = document.getElementById('ciPhone').value.trim();
+  const addressEl = document.getElementById('ciAddress');
+  const address = addressEl ? addressEl.value.trim() : orderMeta.address;
+  orderMeta.name = name || orderMeta.name;
+  orderMeta.phone = phone || orderMeta.phone;
+  orderMeta.address = address;
+  await updateOrderInDB(currentOrderNo, {customer_name: orderMeta.name||null, customer_phone: orderMeta.phone||null, customer_address: orderMeta.address||null});
+  renderTicket();
+  closeModal();
+}
+
+function openOrderTypeModal(){
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  overlay.classList.add('show');
+  const types = [['dine-in','堂食 Dine In'],['to-go','外带 To Go'],['pickup','自取 Pick Up'],['delivery','外送 Delivery']];
+  content.innerHTML = `
+    <h3>订单类型 Order Type</h3>
+    <p>当前:${{'dine-in':'堂食','to-go':'外带','pickup':'自取','delivery':'外送'}[orderMeta.type]}</p>
+    <div style="display:flex; flex-direction:column; gap:8px; margin:14px 0;">
+      ${types.map(([k,l])=>`<button class="modal-close" style="background:${k===orderMeta.type?'var(--ink)':'var(--paper)'}; color:${k===orderMeta.type?'var(--paper)':'var(--ink)'}; border:1.5px solid var(--slate-line);" onclick="changeOrderType('${k}')">${l}</button>`).join('')}
+    </div>
+    <button class="modal-close" style="background:transparent; color:var(--slate); border:1.5px solid var(--slate-line);" onclick="closeModal()">取消 Cancel</button>
+  `;
+}
+async function changeOrderType(newType){
+  if(newType===orderMeta.type){ closeModal(); return; }
+  if(newType==='dine-in'){
+    closeModal();
+    alert('请通过"换桌"按钮为这单选择一个桌号 Please use the "换桌" button to assign a table');
+    return;
+  }
+  orderMeta.type = newType;
+  orderMeta.table = null;
+  await updateOrderInDB(currentOrderNo, {type:newType, table_label:null});
+  renderTicket();
+  closeModal();
+}
+
+async function openChangeTableModal(){
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  overlay.classList.add('show');
+  content.innerHTML = `<div class="spinner"></div><h3>加载桌位中...</h3>`;
+
+  const {data: openOrders, error} = await db.from('orders').select('table_label').eq('type','dine-in').in('status',['open','fired','held']);
+  const occupied = new Set(error ? [] : openOrders.map(o=>o.table_label).filter(t=>t!==orderMeta.table));
+
+  let optionsHtml = '';
+  Object.keys(TABLE_SECTIONS).forEach(section=>{
+    optionsHtml += `<div style="font-size:11px; color:var(--slate); font-weight:700; margin:10px 0 6px; text-transform:uppercase;">${section}</div><div style="display:flex; flex-wrap:wrap; gap:6px;">`;
+    TABLE_SECTIONS[section].forEach(t=>{
+      const isOcc = occupied.has(t.label);
+      const isCurrent = t.label===orderMeta.table;
+      optionsHtml += `<button ${isOcc?'disabled':''} onclick="changeTable('${t.label}')" style="padding:8px 14px; border-radius:8px; border:1.5px solid ${isCurrent?'var(--amber)':'var(--slate-line)'}; background:${isOcc?'var(--slate-line)':(isCurrent?'var(--amber)':'var(--white)')}; color:${isOcc?'var(--slate)':'var(--ink)'}; font-weight:700; font-size:13px;">${t.label}</button>`;
+    });
+    optionsHtml += `</div>`;
+  });
+
+  content.innerHTML = `
+    <h3>换桌 Change Table</h3>
+    <p>当前桌号:${orderMeta.type==='dine-in' ? orderMeta.table : '(非堂食订单)'}</p>
+    <div style="max-height:280px; overflow-y:auto; text-align:left; margin:14px 0;">${optionsHtml}</div>
+    <button class="modal-close" style="background:transparent; color:var(--slate); border:1.5px solid var(--slate-line);" onclick="closeModal()">取消 Cancel</button>
+  `;
+}
+async function changeTable(newLabel){
+  const wasType = orderMeta.type;
+  orderMeta.type = 'dine-in';
+  orderMeta.table = newLabel;
+  await updateOrderInDB(currentOrderNo, {type:'dine-in', table_label:newLabel});
+  renderTicket();
+  closeModal();
+}
 
 function closeModal(){
   document.getElementById('modalOverlay').classList.remove('show');
