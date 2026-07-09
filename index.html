@@ -1666,7 +1666,7 @@ function renderTicket(){
   document.getElementById('total').textContent = `$${total.toFixed(2)}`;
 
   document.getElementById('fireBtn').disabled = order.length===0 || orderStatus!=='open';
-  document.getElementById('payBtn').disabled = orderStatus!=='fired';
+  document.getElementById('payBtn').disabled = order.length===0 || orderStatus==='paid';
   document.getElementById('printBtn').disabled = orderStatus==='open';
   document.getElementById('holdBtn').style.display = orderStatus==='open' ? 'flex' : 'none';
   document.getElementById('cancelBtn').style.display = orderStatus==='open' ? 'flex' : 'none';
@@ -1714,7 +1714,16 @@ function printKitchenTicket(){
   window.print();
 }
 
-document.getElementById('payBtn').onclick = ()=>{
+document.getElementById('payBtn').onclick = async ()=>{
+  if(order.length===0){ alert('订单是空的 Order is empty'); return; }
+  if(orderStatus==='paid'){ alert('这单已经支付过了 This order has already been paid'); return; }
+  if(orderStatus==='open'){
+    if(!confirm('这单还没送厨房，要直接结账吗？结账后会自动送厨房通知。\nThis order hasn\'t been sent to the kitchen yet. Charge anyway? It will auto-send to the kitchen after payment.')) return;
+    orderStatus = 'fired';
+    await updateOrderInDB(currentOrderNo, {status:'fired'});
+    await syncOrderItems(currentOrderNo);
+    printKitchenTicket();
+  }
   openPaymentScreen();
 };
 
