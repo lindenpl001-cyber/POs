@@ -246,12 +246,20 @@
   }
   .table-grid{
     flex:1;
-    display:grid;
-    grid-template-columns:repeat(6, 1fr);
-    gap:16px;
-    padding:28px 40px;
+    display:flex;
+    flex-direction:column;
+    gap:26px;
+    padding:24px 40px;
     overflow-y:auto;
-    align-content:start;
+  }
+  .table-section-title{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:700;
+    color:var(--slate); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px;
+  }
+  .table-section-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(96px, 1fr));
+    gap:14px;
   }
   .table-btn{
     aspect-ratio:1;
@@ -266,8 +274,10 @@
     cursor:pointer;
     font-family:'IBM Plex Mono',monospace;
   }
-  .table-btn .tnum{font-size:24px; font-weight:700;}
-  .table-btn .tstatus{font-size:10px; color:var(--herb); text-transform:uppercase; letter-spacing:1px;}
+  .table-btn.booth{ aspect-ratio:1.8; grid-column:span 2; }
+  .table-btn .tnum{font-size:22px; font-weight:700;}
+  .table-btn .tstatus{font-size:9.5px; color:var(--herb); text-transform:uppercase; letter-spacing:1px;}
+  .table-btn .tduration{font-size:9.5px; color:var(--ember); font-weight:700; margin-top:1px;}
   .table-btn.occupied{background:#F3E3DC; border-color:var(--ember);}
   .table-btn.occupied .tstatus{color:var(--ember);}
   .table-btn:active{transform:scale(.96);}
@@ -309,8 +319,20 @@
 
   /* ================= RECALL ================= */
   #screen-recall{background:var(--paper); flex-direction:column;}
+  .recall-filters{padding:16px 40px 4px; display:flex; flex-direction:column; gap:10px;}
+  .recall-filter-row{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .rf-label{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--slate); text-transform:uppercase; letter-spacing:.5px; width:70px; flex-shrink:0;}
+  .rf-chip{
+    background:var(--white); border:1.5px solid var(--slate-line); border-radius:16px;
+    padding:6px 14px; font-size:12.5px; font-weight:600; color:var(--slate); cursor:pointer;
+  }
+  .rf-chip.active{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+  .rf-search{
+    width:100%; padding:10px 14px; border:1.5px solid var(--slate-line); border-radius:10px;
+    font-size:13.5px; background:var(--white);
+  }
   .recall-list{
-    flex:1; overflow-y:auto; padding:20px 40px; display:flex; flex-direction:column; gap:12px;
+    flex:1; overflow-y:auto; padding:12px 40px 20px; display:flex; flex-direction:column; gap:12px;
   }
   .recall-item{
     background:var(--white); border:1.5px solid var(--slate-line); border-radius:14px;
@@ -368,6 +390,12 @@
   .cat-btn.active .dot{opacity:1;}
 
   .menu{grid-area:menu; background:var(--paper); padding:20px 24px 24px; overflow-y:auto;}
+  .group-tabs{display:flex; gap:8px; margin-bottom:14px; overflow-x:auto; padding-bottom:2px;}
+  .group-tab{
+    flex-shrink:0; padding:8px 18px; border-radius:20px; border:1.5px solid var(--slate-line);
+    background:var(--white); color:var(--slate); font-weight:700; font-size:13px; cursor:pointer;
+  }
+  .group-tab.active{background:var(--ink); color:var(--paper); border-color:var(--ink);}
   .menu-header{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px;}
   .menu-header h1{font-family:'Fraunces',serif; font-weight:700; font-size:24px;}
   .order-context{
@@ -669,6 +697,7 @@
     <button class="back-btn" onclick="goHome()">← 返回 Back</button>
     <h1>调出订单 Recall Orders</h1>
   </div>
+  <div class="recall-filters" id="recallFilters"></div>
   <div class="recall-list" id="recallList"></div>
 </div>
 
@@ -678,6 +707,7 @@
     <button class="rail-back" onclick="exitOrderToHome()">← 首页</button>
   </div>
   <div class="menu">
+    <div class="group-tabs" id="groupTabs"></div>
     <div class="menu-header">
       <h1 id="catTitle"></h1>
       <div class="order-context" id="orderContext"></div>
@@ -703,6 +733,7 @@
         <button class="btn btn-print" id="printBtn" disabled>🖨️ 打印小票 Print Ticket</button>
         <button class="btn btn-pay" id="payBtn" disabled>💳 刷卡结账 Charge Card</button>
         <button class="btn btn-hold" id="holdBtn">⏸ 暂存订单 Hold Order</button>
+        <button class="btn btn-new" id="cancelBtn" style="border-color:var(--ember); color:var(--ember);">✕ 取消订单 / 清台 Cancel</button>
         <button class="btn btn-new" id="newBtn" style="display:none;">＋ 新订单 New Order</button>
       </div>
     </div>
@@ -759,6 +790,14 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 /* ===================== MENU DATA (loaded from Supabase) ===================== */
 let MENU = {};          // { "开胃菜 Appetizers": [{id, name, price}, ...], ... }
 let categoryIds = {};   // { "开胃菜 Appetizers": uuid }
+let groupIds = {};      // { "全部菜单 All Day Menu": uuid }
+let MENU_GROUPS = {};   // { "全部菜单 All Day Menu": ["开胃菜 Appetizers", ...], ... }
+let currentGroup = "";
+
+/* Restaurant tables (loaded from Supabase `restaurant_tables`) */
+let TABLE_SECTIONS = {}; // { "A": [{id,label,shape}], "B": [...], ... }
+let tableOccupancy = {}; // { "A1": {orderId, startedAt} }
+let tableTimerInterval = null;
 
 /* ===================== STATE ===================== */
 let pinBuffer = "";
@@ -978,26 +1017,61 @@ function openDrawer(){
 }
 
 /* ===================== TABLE SELECT ===================== */
-function goTables(){
-  const grid = document.getElementById('tableGrid');
-  grid.innerHTML = '';
-  const occupied = new Set(parkedOrders.filter(o=>o.type==='dine-in').map(o=>o.table));
-  for(let i=1;i<=24;i++){
-    const btn = document.createElement('div');
-    const isOcc = occupied.has(i);
-    btn.className = 'table-btn' + (isOcc?' occupied':'');
-    btn.innerHTML = `<div class="tnum">${i}</div><div class="tstatus">${isOcc?'占用中':'空闲'}</div>`;
-    btn.onclick = ()=>{
-      if(isOcc){
-        const parked = parkedOrders.find(o=>o.type==='dine-in' && o.table===i);
-        resumeParkedOrder(parked);
-      } else {
-        startNewOrder({type:'dine-in', table:i});
-      }
-    };
-    grid.appendChild(btn);
-  }
+async function goTables(){
   showScreen('screen-tables');
+  const grid = document.getElementById('tableGrid');
+  grid.innerHTML = `<p style="color:var(--slate); font-size:13.5px;">加载中... Loading...</p>`;
+
+  const {data: openOrders, error} = await db.from('orders')
+    .select('id, table_label, created_at')
+    .eq('type','dine-in')
+    .in('status', ['open','fired','held']);
+
+  if(error){
+    grid.innerHTML = `<p style="color:var(--ember); font-size:13.5px;">加载失败 Failed to load: ${error.message}</p>`;
+    return;
+  }
+
+  tableOccupancy = {};
+  openOrders.forEach(o=>{ tableOccupancy[o.table_label] = {id:o.id, startedAt:new Date(o.created_at)}; });
+
+  grid.innerHTML = '';
+  Object.keys(TABLE_SECTIONS).forEach(section=>{
+    const sectionDiv = document.createElement('div');
+    const title = document.createElement('div');
+    title.className = 'table-section-title';
+    title.textContent = section;
+    sectionDiv.appendChild(title);
+
+    const sectionGrid = document.createElement('div');
+    sectionGrid.className = 'table-section-grid';
+    TABLE_SECTIONS[section].forEach(t=>{
+      const occ = tableOccupancy[t.label];
+      const btn = document.createElement('div');
+      btn.className = 'table-btn' + (t.shape==='booth' ? ' booth' : '') + (occ ? ' occupied' : '');
+      btn.innerHTML = `<div class="tnum">${t.label}</div><div class="tstatus">${occ?'占用中':'空闲'}</div>` +
+        (occ ? `<div class="tduration" data-started="${occ.startedAt.toISOString()}">0:00</div>` : '');
+      btn.onclick = ()=>{
+        if(occ) resumeOrderFromDB(occ.id);
+        else startNewOrder({type:'dine-in', table:t.label});
+      };
+      sectionGrid.appendChild(btn);
+    });
+    sectionDiv.appendChild(sectionGrid);
+    grid.appendChild(sectionDiv);
+  });
+
+  tickTableDurations();
+  if(tableTimerInterval) clearInterval(tableTimerInterval);
+  tableTimerInterval = setInterval(tickTableDurations, 15000);
+}
+function tickTableDurations(){
+  document.querySelectorAll('.tduration').forEach(el=>{
+    const started = new Date(el.dataset.started);
+    const mins = Math.floor((Date.now()-started)/60000);
+    const secs = Math.floor(((Date.now()-started)%60000)/1000);
+    el.textContent = `${mins}:${String(secs).padStart(2,'0')}`;
+  });
 }
 
 /* ===================== CUSTOMER FORM ===================== */
@@ -1025,56 +1099,144 @@ function startOrderFromForm(){
   startNewOrder({type:pendingOrderType, name, phone, address});
 }
 
-/* ===================== RECALL ===================== */
+/* ===================== RECALL / ORDER LOOKUP ===================== */
+let recallFilters = { range:'today', status:'unpaid', type:'all', search:'' };
 function goRecall(){
-  const list = document.getElementById('recallList');
-  list.innerHTML = '';
-  if(parkedOrders.length===0){
-    list.innerHTML = `<div class="recall-empty">暂无暂存订单<br>No held orders</div>`;
-  } else {
-    parkedOrders.forEach(o=>{
-      const row = document.createElement('div');
-      row.className = 'recall-item';
-      const label = o.type==='dine-in' ? `桌 ${o.table} 号` : (o.name + ' · ' + o.type.toUpperCase());
-      const total = calcTotal(o.items).total;
-      row.innerHTML = `
-        <div>
-          <div class="ri-main">${label}</div>
-          <div class="ri-sub">${o.items.length} 项菜品 · #${o.id}</div>
-        </div>
-        <div class="ri-total">$${total.toFixed(2)}</div>
-      `;
-      row.onclick = ()=> resumeParkedOrder(o);
-      list.appendChild(row);
-    });
-  }
   showScreen('screen-recall');
+  renderRecallFilters();
+  runRecallSearch();
 }
-function resumeParkedOrder(parked){
-  parkedOrders = parkedOrders.filter(o=>o.id!==parked.id);
-  orderMeta = parked;
-  order = parked.items;
-  orderStatus = 'open';
-  currentOrderNo = parked.id;
+function renderRecallFilters(){
+  const wrap = document.getElementById('recallFilters');
+  const ranges = [['today','今天 Today'],['yesterday','昨天 Yesterday'],['week','本周 This Week'],['month','本月 This Month'],['all','全部 All']];
+  const statuses = [['unpaid','未结 Unpaid'],['paid','已结 Paid'],['open','待处理 Open'],['fired','厨房中 Fired'],['held','已暂存 Held'],['all','全部 All']];
+  const types = [['all','全部 All'],['dine-in','堂食'],['to-go','外带'],['pickup','自取'],['delivery','外送']];
+  wrap.innerHTML = `
+    <div class="recall-filter-row">
+      <span class="rf-label">日期 Date</span>
+      ${ranges.map(([k,l])=>`<button class="rf-chip ${recallFilters.range===k?'active':''}" onclick="setRecallFilter('range','${k}')">${l}</button>`).join('')}
+    </div>
+    <div class="recall-filter-row">
+      <span class="rf-label">状态 Status</span>
+      ${statuses.map(([k,l])=>`<button class="rf-chip ${recallFilters.status===k?'active':''}" onclick="setRecallFilter('status','${k}')">${l}</button>`).join('')}
+    </div>
+    <div class="recall-filter-row">
+      <span class="rf-label">类型 Type</span>
+      ${types.map(([k,l])=>`<button class="rf-chip ${recallFilters.type===k?'active':''}" onclick="setRecallFilter('type','${k}')">${l}</button>`).join('')}
+    </div>
+    <div class="recall-filter-row">
+      <input type="text" class="rf-search" id="rfSearch" placeholder="搜索电话/姓名/桌号 Search phone, name, table..." value="${recallFilters.search}" oninput="setRecallFilter('search', this.value)">
+    </div>
+  `;
+}
+function setRecallFilter(key, val){
+  recallFilters[key] = val;
+  renderRecallFilters();
+  runRecallSearch();
+}
+async function runRecallSearch(){
+  const list = document.getElementById('recallList');
+  list.innerHTML = `<p style="color:var(--slate); font-size:13.5px; text-align:center; margin-top:30px;">加载中... Loading...</p>`;
+
+  let query = db.from('orders').select('*, order_items(*)').order('created_at', {ascending:false}).limit(100);
+
+  const now = new Date();
+  if(recallFilters.range==='today'){
+    const start = new Date(); start.setHours(0,0,0,0);
+    query = query.gte('created_at', start.toISOString());
+  } else if(recallFilters.range==='yesterday'){
+    const start = new Date(); start.setDate(start.getDate()-1); start.setHours(0,0,0,0);
+    const end = new Date(); end.setHours(0,0,0,0);
+    query = query.gte('created_at', start.toISOString()).lt('created_at', end.toISOString());
+  } else if(recallFilters.range==='week'){
+    const start = new Date(); start.setDate(start.getDate()-7);
+    query = query.gte('created_at', start.toISOString());
+  } else if(recallFilters.range==='month'){
+    const start = new Date(); start.setMonth(start.getMonth()-1);
+    query = query.gte('created_at', start.toISOString());
+  }
+
+  if(recallFilters.status==='unpaid') query = query.in('status', ['open','fired','held']);
+  else if(recallFilters.status!=='all') query = query.eq('status', recallFilters.status);
+
+  if(recallFilters.type!=='all') query = query.eq('type', recallFilters.type);
+
+  const {data: orders, error} = await query;
+  if(error){
+    list.innerHTML = `<p style="color:var(--ember); font-size:13.5px; text-align:center; margin-top:30px;">加载失败 Failed to load: ${error.message}</p>`;
+    return;
+  }
+
+  let filtered = orders;
+  const s = recallFilters.search.trim().toLowerCase();
+  if(s){
+    filtered = orders.filter(o=>
+      (o.customer_phone||'').toLowerCase().includes(s) ||
+      (o.customer_name||'').toLowerCase().includes(s) ||
+      (o.table_label||'').toLowerCase().includes(s) ||
+      String(o.order_number).includes(s)
+    );
+  }
+
+  if(filtered.length===0){
+    list.innerHTML = `<div class="recall-empty">没有找到符合条件的订单<br>No matching orders</div>`;
+    return;
+  }
+
+  const statusLabel = {open:'待处理',fired:'厨房中',held:'已暂存',paid:'已结',cancelled:'已取消'};
+  list.innerHTML = '';
+  filtered.forEach(o=>{
+    const label = o.type==='dine-in' ? `桌 ${o.table_label}` : `${o.customer_name||'Guest'} · ${o.type.toUpperCase()}`;
+    const time = new Date(o.created_at).toLocaleString('en-US',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const row = document.createElement('div');
+    row.className = 'recall-item';
+    row.innerHTML = `
+      <div>
+        <div class="ri-main">${label} <span style="color:var(--slate); font-weight:400; font-size:12px;">#${o.order_number} · ${statusLabel[o.status]||o.status}</span></div>
+        <div class="ri-sub">${o.order_items.length} 项菜品 · ${time}${o.customer_phone?' · 📞 '+o.customer_phone:''}</div>
+      </div>
+      <div class="ri-total">$${parseFloat(o.total||0).toFixed(2)}</div>
+    `;
+    if(o.status!=='paid' && o.status!=='cancelled'){
+      row.onclick = ()=> resumeOrderFromDB(o.id);
+    } else {
+      row.style.cursor = 'default';
+    }
+    list.appendChild(row);
+  });
+}
+async function resumeOrderFromDB(dbOrderId){
+  const {data: o, error} = await db.from('orders').select('*, order_items(*)').eq('id', dbOrderId).single();
+  if(error){ alert('读取订单失败 Failed to load order: '+error.message); return; }
+  orderMeta = {
+    type: o.type, orderNo: o.order_number,
+    table: o.table_label, name: o.customer_name, phone: o.customer_phone, address: o.customer_address
+  };
+  order = o.order_items.map(it=>({id: idSeq++, name:it.name, price:parseFloat(it.price), qty:it.qty, note:it.note||''}));
+  orderStatus = o.status==='paid' ? 'paid' : (o.status==='fired' ? 'fired' : 'open');
+  currentOrderNo = o.id;
   enterOrderScreen();
 }
 
 /* ===================== ORDER FLOW ===================== */
-function startNewOrder(meta){
-  orderMeta = meta;
+async function startNewOrder(meta){
+  const dbOrder = await createOrderInDB(meta);
+  if(!dbOrder) return;
+  orderMeta = {...meta, orderNo: dbOrder.order_number};
   order = [];
   orderStatus = 'open';
-  currentOrderNo = null;
+  currentOrderNo = dbOrder.id;
   idSeq = 0;
   enterOrderScreen();
 }
 function enterOrderScreen(){
   applyOrderLayout();
-  renderCategories();
+  renderGroups();
   renderTicket();
   showScreen('screen-order');
 }
 function exitOrderToHome(){
+  if(tableTimerInterval){ clearInterval(tableTimerInterval); tableTimerInterval = null; }
   if(order.length>0 && orderStatus==='open'){
     if(!confirm('订单还未暂存或送出，确定要离开吗？\nOrder not saved yet, leave anyway?')) return;
   }
@@ -1083,7 +1245,7 @@ function exitOrderToHome(){
 
 function contextLabel(){
   if(!orderMeta) return '';
-  if(orderMeta.type==='dine-in') return `桌 ${orderMeta.table} 号 · Dine In`;
+  if(orderMeta.type==='dine-in') return `桌 ${orderMeta.table} · Dine In`;
   const t = {'to-go':'To Go','pickup':'Pick Up','delivery':'Delivery'}[orderMeta.type];
   return `${orderMeta.name} · ${t}`;
 }
@@ -1095,11 +1257,28 @@ function contextDetail(){
   return s;
 }
 
-/* ===================== CATEGORY / MENU ===================== */
+/* ===================== MENU GROUP / CATEGORY / MENU ===================== */
+function renderGroups(){
+  const wrap = document.getElementById('groupTabs');
+  wrap.innerHTML = '';
+  Object.keys(MENU_GROUPS).forEach(g=>{
+    const btn = document.createElement('button');
+    btn.className = 'group-tab' + (g===currentGroup ? ' active' : '');
+    btn.textContent = g;
+    btn.onclick = ()=>{
+      currentGroup = g;
+      currentCat = MENU_GROUPS[g][0] || "";
+      renderGroups(); renderCategories();
+    };
+    wrap.appendChild(btn);
+  });
+  renderCategories();
+}
 function renderCategories(){
   const rail = document.getElementById('rail');
   rail.querySelectorAll('.cat-btn').forEach(b=>b.remove());
-  Object.keys(MENU).forEach(cat=>{
+  const catsInGroup = MENU_GROUPS[currentGroup] || Object.keys(MENU);
+  catsInGroup.forEach(cat=>{
     const btn = document.createElement('button');
     btn.className = 'cat-btn' + (cat===currentCat ? ' active' : '');
     btn.innerHTML = `<span class="dot"></span><span>${cat.split(' ')[0]}</span>`;
@@ -1113,7 +1292,7 @@ function renderMenu(){
   document.getElementById('orderContext').textContent = contextLabel();
   const menuGrid = document.getElementById('menuGrid');
   menuGrid.innerHTML = '';
-  MENU[currentCat].forEach(item=>{
+  (MENU[currentCat]||[]).forEach(item=>{
     const card = document.createElement('button');
     card.className = 'item-card';
     card.disabled = orderStatus !== 'open';
@@ -1158,6 +1337,9 @@ function renderTicket(){
   document.getElementById('ticketCtxDetail').textContent = contextDetail();
   document.getElementById('orderContext').textContent = contextLabel();
 
+  const statusText = {open:'待下单', fired:'已送厨房', paid:'已支付'}[orderStatus] || '待下单';
+  document.getElementById('ticketNo').textContent = orderMeta ? `ORDER #${orderMeta.orderNo} · ${statusText}` : 'ORDER · 待下单';
+
   const ticketBody = document.getElementById('ticketBody');
   if(order.length===0){
     ticketBody.innerHTML = `<div class="empty-state"><div class="big">还没有点菜</div><div>点击左侧菜单加入订单</div></div>`;
@@ -1194,33 +1376,41 @@ function renderTicket(){
   document.getElementById('payBtn').disabled = orderStatus!=='fired';
   document.getElementById('printBtn').disabled = orderStatus==='open';
   document.getElementById('holdBtn').style.display = orderStatus==='open' ? 'flex' : 'none';
+  document.getElementById('cancelBtn').style.display = orderStatus==='open' ? 'flex' : 'none';
 
   renderMenu();
 }
 
 /* ===================== ACTIONS ===================== */
-document.getElementById('fireBtn').onclick = ()=>{
+document.getElementById('fireBtn').onclick = async ()=>{
   if(order.length===0) return;
-  currentOrderNo = currentOrderNo || orderCounter++;
   orderStatus = 'fired';
-  document.getElementById('ticketNo').textContent = `ORDER #${currentOrderNo} · 已送厨房`;
+  document.getElementById('ticketNo').textContent = `ORDER #${orderMeta.orderNo} · 已送厨房`;
   const banner = document.getElementById('statusBanner');
   banner.className = 'status-banner show status-fired';
   banner.textContent = '🔥 订单已发送到厨房，等待制作';
   document.getElementById('newBtn').style.display = 'none';
   renderTicket();
+  await updateOrderInDB(currentOrderNo, {status:'fired'});
+  await syncOrderItems(currentOrderNo);
 };
 
-document.getElementById('holdBtn').onclick = ()=>{
+document.getElementById('holdBtn').onclick = async ()=>{
   if(order.length===0){ alert('订单是空的 Order is empty'); return; }
-  const id = currentOrderNo || orderCounter++;
-  parkedOrders.push({id, ...orderMeta, items: order});
+  await updateOrderInDB(currentOrderNo, {status:'held'});
+  await syncOrderItems(currentOrderNo);
+  goHome();
+};
+
+document.getElementById('cancelBtn').onclick = async ()=>{
+  if(!confirm('确定要取消这个订单吗？这会清空桌子占用状态。\nCancel this order? This will free up the table.')) return;
+  await updateOrderInDB(currentOrderNo, {status:'cancelled'});
   goHome();
 };
 
 document.getElementById('printBtn').onclick = ()=>{
   document.getElementById('pt-heading').textContent = contextLabel() + ' · 厨房单';
-  document.getElementById('pt-order').textContent = `#${currentOrderNo}`;
+  document.getElementById('pt-order').textContent = `#${orderMeta.orderNo}`;
   document.getElementById('pt-time').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('pt-items').innerHTML = order.map(l=>
     `<div class="pt-row"><span>${l.qty}x ${l.name}${l.note? ' ('+l.note+')':''}</span><span>$${(l.price*l.qty).toFixed(2)}</span></div>`
@@ -1238,10 +1428,10 @@ document.getElementById('payBtn').onclick = ()=>{
     <h3>请在读卡器上刷卡</h3>
     <p>Square Terminal 正在等待付款 — Total ${document.getElementById('total').textContent}</p>
   `;
-  setTimeout(()=>{
+  setTimeout(async ()=>{
     orderStatus = 'paid';
     saveCustomerHistory(orderMeta, order);
-    saveCompletedOrder();
+    await finalizePaidOrder();
     content.innerHTML = `
       <div class="checkmark">✓</div>
       <h3>支付成功</h3>
@@ -1264,36 +1454,47 @@ function closeModal(){
   document.getElementById('modalOverlay').classList.remove('show');
 }
 
-async function saveCompletedOrder(){
-  const {subtotal, tax, total} = calcTotal(order);
-  const record = {
-    id: currentOrderNo,
-    type: orderMeta.type,
-    label: contextLabel(),
-    items: order.map(l=>({...l})),
-    subtotal, tax, total,
-    timestamp: new Date()
-  };
-  completedOrders.push(record);
-
-  const {data: orderRow, error: orderErr} = await db.from('orders').insert({
-    type: orderMeta.type,
-    table_number: orderMeta.table || null,
-    customer_name: orderMeta.name || null,
-    customer_phone: orderMeta.phone || null,
-    customer_address: orderMeta.address || null,
-    status: 'paid',
-    subtotal, tax, total,
-    staff_name: staffName,
-    paid_at: new Date().toISOString()
+/* ===================== ORDER PERSISTENCE (Supabase) =====================
+   Orders are saved to the database the moment they're created (not just at
+   payment), so table occupancy, held orders, and order lookup all survive
+   refreshes and work across multiple tablets. */
+async function createOrderInDB(meta){
+  const {data, error} = await db.from('orders').insert({
+    type: meta.type,
+    table_label: meta.table || null,
+    customer_name: meta.name || null,
+    customer_phone: meta.phone || null,
+    customer_address: meta.address || null,
+    status: 'open',
+    staff_name: staffName
   }).select().single();
-  if(orderErr){ console.error('saveCompletedOrder (orders) error', orderErr); return; }
-
-  const rows = order.map(l=>({order_id: orderRow.id, name:l.name, price:l.price, qty:l.qty, note:l.note||null}));
+  if(error){ console.error('createOrderInDB error', error); alert('创建订单失败，请检查网络 Failed to create order'); return null; }
+  return data;
+}
+async function syncOrderItems(dbOrderId){
+  if(!dbOrderId) return;
+  await db.from('order_items').delete().eq('order_id', dbOrderId);
+  const rows = order.map(l=>({order_id: dbOrderId, name:l.name, price:l.price, qty:l.qty, note:l.note||null}));
   if(rows.length){
-    const {error: itemsErr} = await db.from('order_items').insert(rows);
-    if(itemsErr) console.error('saveCompletedOrder (order_items) error', itemsErr);
+    const {error} = await db.from('order_items').insert(rows);
+    if(error) console.error('syncOrderItems error', error);
   }
+}
+async function updateOrderInDB(dbOrderId, patch){
+  if(!dbOrderId) return;
+  const {error} = await db.from('orders').update(patch).eq('id', dbOrderId);
+  if(error) console.error('updateOrderInDB error', error);
+}
+async function finalizePaidOrder(){
+  const {subtotal, tax, total} = calcTotal(order);
+  completedOrders.push({
+    id: currentOrderNo, type: orderMeta.type, label: contextLabel(),
+    items: order.map(l=>({...l})), subtotal, tax, total, timestamp: new Date()
+  });
+  await updateOrderInDB(currentOrderNo, {
+    status:'paid', subtotal, tax, total, paid_at: new Date().toISOString()
+  });
+  await syncOrderItems(currentOrderNo);
 }
 
 /* ===================== ADMIN: PIN GATE ===================== */
@@ -1356,8 +1557,28 @@ function switchAdminTab(tab){
 /* ===================== ADMIN: MENU MANAGEMENT ===================== */
 function renderAdminMenu(body){
   let html = `<h2>菜单管理 Menu Management</h2>`;
+
+  html += `<div class="admin-section"><h3>菜单大分组 Menu Groups</h3>
+    <p style="color:var(--slate); font-size:12.5px; margin-bottom:10px;">点餐页顶部的大标签(比如 Lunch / Bar),每个分类都归属一个大分组。</p>
+    <div class="admin-add-form">
+      ${Object.keys(MENU_GROUPS).map(g=>`<span class="rf-chip active" style="cursor:default;">${g}</span>`).join('')}
+    </div>
+    <div class="admin-add-form" style="margin-top:10px;">
+      <input type="text" id="newGroupName" placeholder="新大分组名 e.g. 晚市 Dinner Menu">
+      <button class="admin-btn" onclick="addMenuGroup()">＋ 添加大分组</button>
+    </div>
+  </div>`;
+
   Object.keys(MENU).forEach(cat=>{
-    html += `<div class="admin-section"><h3>${cat}</h3><table class="admin-table"><thead><tr>
+    const catGroup = Object.keys(MENU_GROUPS).find(g=>MENU_GROUPS[g].includes(cat)) || '';
+    html += `<div class="admin-section"><h3>${cat}</h3>
+      <div style="margin-bottom:10px; font-size:12.5px; display:flex; align-items:center; gap:8px;">
+        <span style="color:var(--slate);">所属大分组 Group:</span>
+        <select onchange="moveCategoryToGroup('${cat}', this.value)">
+          ${Object.keys(MENU_GROUPS).map(g=>`<option value="${g}" ${g===catGroup?'selected':''}>${g}</option>`).join('')}
+        </select>
+      </div>
+      <table class="admin-table"><thead><tr>
       <th>菜品名 Name</th><th style="width:120px;">价格 Price</th><th style="width:50px;"></th>
     </tr></thead><tbody>`;
     MENU[cat].forEach((item,idx)=>{
@@ -1381,6 +1602,25 @@ function renderAdminMenu(body){
       <button class="admin-btn" onclick="addMenuCategory()">＋ 添加分类</button>
     </div></div>`;
   body.innerHTML = html;
+}
+async function addMenuGroup(){
+  const input = document.getElementById('newGroupName');
+  const name = input.value.trim();
+  if(!name){ return; }
+  if(MENU_GROUPS[name]){ alert('该大分组已存在 Group already exists'); return; }
+  const {data, error} = await db.from('menu_groups')
+    .insert({name, sort_order: Object.keys(MENU_GROUPS).length+1}).select().single();
+  if(error){ alert('保存失败，请重试 Failed to save: '+error.message); return; }
+  MENU_GROUPS[name] = [];
+  groupIds[name] = data.id;
+  renderAdminMenu(document.getElementById('adminBody'));
+}
+async function moveCategoryToGroup(cat, groupName){
+  const groupId = groupIds[groupName];
+  Object.keys(MENU_GROUPS).forEach(g=>{ MENU_GROUPS[g] = MENU_GROUPS[g].filter(c=>c!==cat); });
+  MENU_GROUPS[groupName].push(cat);
+  await db.from('categories').update({group_id: groupId}).eq('id', categoryIds[cat])
+    .then(({error})=>{ if(error) console.error('moveCategoryToGroup error', error); });
 }
 function updateMenuItem(cat, idx, field, val){
   const item = MENU[cat][idx];
@@ -1415,11 +1655,14 @@ async function addMenuCategory(){
   const name = input.value.trim();
   if(!name){ return; }
   if(MENU[name]){ alert('该分类已存在 Category already exists'); return; }
+  const defaultGroupId = Object.values(groupIds)[0] || null;
   const {data, error} = await db.from('categories')
-    .insert({name, sort_order: Object.keys(MENU).length+1}).select().single();
+    .insert({name, sort_order: Object.keys(MENU).length+1, group_id: defaultGroupId}).select().single();
   if(error){ alert('保存失败，请重试 Failed to save: '+error.message); return; }
   MENU[name] = [];
   categoryIds[name] = data.id;
+  const defaultGroupName = Object.keys(groupIds)[0];
+  if(defaultGroupName) MENU_GROUPS[defaultGroupName].push(name);
   renderAdminMenu(document.getElementById('adminBody'));
 }
 
@@ -1540,7 +1783,7 @@ async function renderAdminHistory(body){
     html += `<div class="history-empty">暂无已完成的订单<br>No completed orders yet</div>`;
   } else {
     orders.forEach(o=>{
-      const label = o.type==='dine-in' ? `桌 ${o.table_number} 号` : `${o.customer_name||'Guest'} · ${o.type.toUpperCase()}`;
+      const label = o.type==='dine-in' ? `桌 ${o.table_label}` : `${o.customer_name||'Guest'} · ${o.type.toUpperCase()}`;
       const time = new Date(o.paid_at).toLocaleString('en-US',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
       const itemsHtml = o.order_items.map(l=>`${l.qty}x ${l.name}${l.note?' ('+l.note+')':''} — $${(l.price*l.qty).toFixed(2)}`).join('<br>');
       html += `<div class="history-row" onclick="this.classList.toggle('expanded')">
@@ -1651,19 +1894,38 @@ async function bootstrapApp(){
   pinLabel.textContent = '正在连接数据库... Loading...';
 
   try{
+    // Menu groups
+    const {data: groups, error: groupsErr} = await db.from('menu_groups').select('*').order('sort_order');
+    if(groupsErr) throw groupsErr;
+
     // Categories + menu items
     const {data: cats, error: catsErr} = await db.from('categories').select('*').order('sort_order');
     if(catsErr) throw catsErr;
     const {data: items, error: itemsErr} = await db.from('menu_items').select('*').eq('active', true).order('sort_order');
     if(itemsErr) throw itemsErr;
 
-    MENU = {}; categoryIds = {};
-    cats.forEach(c=>{ MENU[c.name] = []; categoryIds[c.name] = c.id; });
+    MENU = {}; categoryIds = {}; MENU_GROUPS = {};
+    groups.forEach(g=>{ MENU_GROUPS[g.name] = []; groupIds[g.name] = g.id; });
+    cats.forEach(c=>{
+      MENU[c.name] = []; categoryIds[c.name] = c.id;
+      const groupName = groups.find(g=>g.id===c.group_id)?.name;
+      if(groupName) MENU_GROUPS[groupName].push(c.name);
+    });
     items.forEach(it=>{
       const catName = cats.find(c=>c.id===it.category_id)?.name;
       if(catName) MENU[catName].push({id: it.id, name: it.name, price: parseFloat(it.price)});
     });
-    currentCat = Object.keys(MENU)[0] || "";
+    currentGroup = Object.keys(MENU_GROUPS)[0] || "";
+    currentCat = MENU_GROUPS[currentGroup]?.[0] || Object.keys(MENU)[0] || "";
+
+    // Restaurant tables
+    const {data: tables, error: tablesErr} = await db.from('restaurant_tables').select('*').eq('active', true).order('sort_order');
+    if(tablesErr) throw tablesErr;
+    TABLE_SECTIONS = {};
+    tables.forEach(t=>{
+      if(!TABLE_SECTIONS[t.section]) TABLE_SECTIONS[t.section] = [];
+      TABLE_SECTIONS[t.section].push({id:t.id, label:t.label, shape:t.shape});
+    });
 
     // Staff accounts
     const {data: staff, error: staffErr} = await db.from('staff').select('*').eq('active', true);
