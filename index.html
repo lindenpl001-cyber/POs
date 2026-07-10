@@ -760,7 +760,30 @@
 </div>
 
 <!-- ============ LOGIN ============ -->
-<div class="screen active" id="screen-login">
+<!-- ============ RESTAURANT OWNER AUTH (gates access before staff PIN login) ============ -->
+<div class="screen active" id="screen-auth">
+  <div class="login-brand">
+    <div class="mark">铺</div>
+    <div class="sub">餐厅账号 Restaurant Account</div>
+  </div>
+  <div class="pin-panel" style="width:340px;">
+    <div id="authTabs" style="display:flex; gap:8px; margin-bottom:18px;">
+      <button class="rf-chip active" id="authTabLogin" onclick="switchAuthTab('login')" style="flex:1;">登录 Login</button>
+      <button class="rf-chip" id="authTabRegister" onclick="switchAuthTab('register')" style="flex:1;">注册新餐厅 Register</button>
+    </div>
+    <div id="authRegisterFields" style="display:none;">
+      <input type="text" id="authRestaurantName" placeholder="餐厅名称 Restaurant Name" style="width:100%; padding:12px; margin-bottom:10px; border-radius:10px; border:none; font-size:14px;">
+    </div>
+    <input type="email" id="authEmail" placeholder="邮箱 Email" style="width:100%; padding:12px; margin-bottom:10px; border-radius:10px; border:none; font-size:14px;">
+    <input type="password" id="authPassword" placeholder="密码 Password" style="width:100%; padding:12px; margin-bottom:14px; border-radius:10px; border:none; font-size:14px;">
+    <button class="modal-close" id="authSubmitBtn" onclick="submitAuth()" style="width:100%;">登录 Log In</button>
+    <div id="authError" style="color:var(--chrome-accent); font-size:12.5px; margin-top:12px; text-align:center;"></div>
+    <div id="authLoading" style="display:none; color:var(--chrome-text-dim); font-size:12.5px; margin-top:12px; text-align:center;">处理中... Working...</div>
+  </div>
+  <div class="login-hint">每家餐厅一个账号，用来在这台设备上"开通"这家店。开通后员工日常还是用 PIN 码点餐，不用每次输邮箱密码。</div>
+</div>
+
+<div class="screen" id="screen-login">
   <div class="login-brand">
     <div class="mark" id="txt-brand-mark">铺</div>
     <div class="sub" id="txt-brand-sub">Staff Terminal · 员工登录</div>
@@ -771,6 +794,7 @@
     <div class="pin-grid" id="pinGrid"></div>
   </div>
   <div class="login-hint">演示账号：员工 1234 / 2345 / 3456 · 管理员 9999</div>
+  <button class="simcall-btn" onclick="signOutRestaurant()" style="margin-top:10px;">切换餐厅账号 Switch Restaurant Account</button>
 </div>
 
 <!-- ============ HOME ============ -->
@@ -1010,6 +1034,84 @@ const SUPABASE_URL = "https://kqeraivpbujrbrqoxkwr.supabase.co";
 const SUPABASE_KEY = "sb_publishable_vdTZhNREQ8_cZd_mr4LKlw_Ny5kfQsq"; // publishable key — safe for browser use, protected by RLS
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+/* ===================== RESTAURANT OWNER AUTH ===================== */
+let currentRestaurantId = null;
+let authTab = 'login';
+
+function switchAuthTab(tab){
+  authTab = tab;
+  document.getElementById('authTabLogin').classList.toggle('active', tab==='login');
+  document.getElementById('authTabRegister').classList.toggle('active', tab==='register');
+  document.getElementById('authRegisterFields').style.display = tab==='register' ? 'block' : 'none';
+  document.getElementById('authSubmitBtn').textContent = tab==='register' ? '注册 Register' : '登录 Log In';
+  document.getElementById('authError').textContent = '';
+}
+
+async function submitAuth(){
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const errEl = document.getElementById('authError');
+  const loadingEl = document.getElementById('authLoading');
+  errEl.textContent = '';
+  if(!email || !password){ errEl.textContent = '请填写邮箱和密码 Please fill in email and password'; return; }
+
+  loadingEl.style.display = 'block';
+  try{
+    if(authTab === 'register'){
+      const restaurantName = document.getElementById('authRestaurantName').value.trim();
+      if(!restaurantName){ errEl.textContent = '请填写餐厅名称 Please enter a restaurant name'; loadingEl.style.display='none'; return; }
+      const {data: signUpData, error: signUpErr} = await db.auth.signUp({email, password});
+      if(signUpErr){ errEl.textContent = signUpErr.message; loadingEl.style.display='none'; return; }
+      if(!signUpData.session){
+        errEl.textContent = '注册成功！请查收邮箱确认链接，确认后回来登录。\nRegistered! Please check your email to confirm, then log in.';
+        loadingEl.style.display='none';
+        return;
+      }
+      const {data: restRow, error: restErr} = await db.from('restaurants')
+        .insert({name: restaurantName, owner_user_id: signUpData.user.id})
+        .select().single();
+      if(restErr){ errEl.textContent = '餐厅创建失败 Failed to create restaurant: '+restErr.message; loadingEl.style.display='none'; return; }
+      currentRestaurantId = restRow.id;
+
+      // Seed a starter manager account so the owner can actually get into a brand-new,
+      // otherwise-empty restaurant. They should change this PIN right away in 员工账号.
+      const {error: seedStaffErr} = await db.from('staff')
+        .insert({restaurant_id: currentRestaurantId, name:'Boss', pin:'9999', role:'manager'});
+      if(seedStaffErr) console.error('seed staff error', seedStaffErr);
+    } else {
+      const {data: signInData, error: signInErr} = await db.auth.signInWithPassword({email, password});
+      if(signInErr){ errEl.textContent = signInErr.message; loadingEl.style.display='none'; return; }
+      const {data: restRow, error: restErr} = await db.from('restaurants')
+        .select('*').eq('owner_user_id', signInData.user.id).single();
+      if(restErr || !restRow){ errEl.textContent = '没有找到关联的餐厅，请联系支持 No restaurant found for this account'; loadingEl.style.display='none'; return; }
+      currentRestaurantId = restRow.id;
+    }
+    showScreen('screen-login');
+    bootstrapApp();
+  } catch(err){
+    errEl.textContent = '出错了 Error: ' + err.message;
+  } finally {
+    loadingEl.style.display = 'none';
+  }
+}
+
+async function signOutRestaurant(){
+  if(!confirm('确定要退出这个餐厅账号吗？下次要重新登录。\nSign out of this restaurant account?')) return;
+  await db.auth.signOut();
+  currentRestaurantId = null;
+  showScreen('screen-auth');
+}
+
+async function checkExistingSession(){
+  const {data: {session}} = await db.auth.getSession();
+  if(!session) return false;
+  const {data: restRow, error} = await db.from('restaurants')
+    .select('*').eq('owner_user_id', session.user.id).single();
+  if(error || !restRow) return false;
+  currentRestaurantId = restRow.id;
+  return true;
+}
+
 /* ===================== MENU DATA (loaded from Supabase) ===================== */
 let MENU = {};          // { "开胃菜 Appetizers": [{id, name, price}, ...], ... }
 let categoryIds = {};   // { "开胃菜 Appetizers": uuid }
@@ -1134,9 +1236,10 @@ function saveCustomerHistory(meta, items){
   };
   customerHistory[key] = record;
   db.from('customers').upsert({
+    restaurant_id: currentRestaurantId,
     phone: key, name: meta.name, address: meta.address||'',
     preferred_type: meta.type, order_count: record.orderCount, last_order_at: new Date().toISOString()
-  }).then(({error})=>{ if(error) console.error('saveCustomerHistory error', error); });
+  }, {onConflict: 'restaurant_id,phone'}).then(({error})=>{ if(error) console.error('saveCustomerHistory error', error); });
 }
 async function loadCustomersFromDB(){
   const {data, error} = await db.from('customers').select('*');
@@ -2134,6 +2237,7 @@ async function saveNote(){
    refreshes and work across multiple tablets. */
 async function createOrderInDB(meta){
   const {data, error} = await db.from('orders').insert({
+    restaurant_id: currentRestaurantId,
     type: meta.type,
     table_label: meta.table || null,
     customer_name: meta.name || null,
@@ -2151,7 +2255,7 @@ async function syncOrderItems(dbOrderId){
   await db.from('order_items').delete().eq('order_id', dbOrderId);
   const rows = order.filter(l=>l.type!=='breakline').map(l=>{
     const combinedNote = [l.modifier ? '调味:'+l.modifier : '', l.note || ''].filter(Boolean).join(' / ');
-    return {order_id: dbOrderId, name:l.name, price:l.price, qty:l.qty, note: combinedNote || null};
+    return {restaurant_id: currentRestaurantId, order_id: dbOrderId, name:l.name, price:l.price, qty:l.qty, note: combinedNote || null};
   });
   if(rows.length){
     const {error} = await db.from('order_items').insert(rows);
@@ -2441,28 +2545,28 @@ function renderAdminText(body){
 function setUiLang(mode){
   appSettings.uiLang = mode;
   applyUiLang();
-  db.from('settings').upsert({key:'app', value: appSettings})
+  db.from('settings').upsert({restaurant_id: currentRestaurantId, key:'app', value: appSettings}, {onConflict: 'restaurant_id,key'})
     .then(({error})=>{ if(error) console.error('setUiLang error', error); });
   renderAdminText(document.getElementById('adminBody'));
 }
 function setTheme(mode){
   appSettings.theme = mode;
   applyTheme();
-  db.from('settings').upsert({key:'app', value: appSettings})
+  db.from('settings').upsert({restaurant_id: currentRestaurantId, key:'app', value: appSettings}, {onConflict: 'restaurant_id,key'})
     .then(({error})=>{ if(error) console.error('setTheme error', error); });
   renderAdminText(document.getElementById('adminBody'));
 }
 function updateUiText(id, val){
   uiText[id] = val;
   applyUiText();
-  db.from('settings').upsert({key:'ui_text', value: uiText})
+  db.from('settings').upsert({restaurant_id: currentRestaurantId, key:'ui_text', value: uiText}, {onConflict: 'restaurant_id,key'})
     .then(({error})=>{ if(error) console.error('updateUiText error', error); });
 }
 function resetUiText(){
   if(!confirm('确定要恢复全部默认文字吗？Reset all text to defaults?')) return;
   uiText = {...uiTextDefaults};
   applyUiText();
-  db.from('settings').upsert({key:'ui_text', value: uiText})
+  db.from('settings').upsert({restaurant_id: currentRestaurantId, key:'ui_text', value: uiText}, {onConflict: 'restaurant_id,key'})
     .then(({error})=>{ if(error) console.error('resetUiText error', error); });
   renderAdminText(document.getElementById('adminBody'));
 }
@@ -2522,7 +2626,7 @@ async function addMenuGroup(){
   if(!name){ return; }
   if(MENU_GROUPS[name]){ alert('该大分组已存在 Group already exists'); return; }
   const {data, error} = await db.from('menu_groups')
-    .insert({name, sort_order: Object.keys(MENU_GROUPS).length+1}).select().single();
+    .insert({restaurant_id: currentRestaurantId, name, sort_order: Object.keys(MENU_GROUPS).length+1}).select().single();
   if(error){ alert('保存失败，请重试 Failed to save: '+error.message); return; }
   MENU_GROUPS[name] = [];
   groupIds[name] = data.id;
@@ -2557,7 +2661,7 @@ async function addMenuItem(cat){
   const price = parseFloat(priceInput.value);
   if(!name || isNaN(price)){ alert('请填写菜品名和价格 Please fill in name and price'); return; }
   const {data, error} = await db.from('menu_items')
-    .insert({category_id: categoryIds[cat], name, price, sort_order: MENU[cat].length+1})
+    .insert({restaurant_id: currentRestaurantId, category_id: categoryIds[cat], name, price, sort_order: MENU[cat].length+1})
     .select().single();
   if(error){ alert('保存失败，请重试 Failed to save: '+error.message); return; }
   MENU[cat].push({id:data.id, name, price});
@@ -2570,7 +2674,7 @@ async function addMenuCategory(){
   if(MENU[name]){ alert('该分类已存在 Category already exists'); return; }
   const defaultGroupId = Object.values(groupIds)[0] || null;
   const {data, error} = await db.from('categories')
-    .insert({name, sort_order: Object.keys(MENU).length+1, group_id: defaultGroupId}).select().single();
+    .insert({restaurant_id: currentRestaurantId, name, sort_order: Object.keys(MENU).length+1, group_id: defaultGroupId}).select().single();
   if(error){ alert('保存失败，请重试 Failed to save: '+error.message); return; }
   MENU[name] = [];
   categoryIds[name] = data.id;
@@ -2670,7 +2774,7 @@ async function addStaff(){
   const role = document.getElementById('newStaffRole').value;
   if(!name || pin.length!==4 || isNaN(pin)){ alert('请填写姓名和 4 位数字密码 Please enter name and a 4-digit PIN'); return; }
   if(staffAccounts.some(a=>a.pin===pin)){ alert('该密码已被使用 PIN already in use'); return; }
-  const {data, error} = await db.from('staff').insert({name, pin, role}).select().single();
+  const {data, error} = await db.from('staff').insert({restaurant_id: currentRestaurantId, name, pin, role}).select().single();
   if(error){ alert('保存失败，请重试 Failed to save: '+error.message); return; }
   staffAccounts.push({id:data.id, name, pin, role});
   renderAdminStaff(document.getElementById('adminBody'));
@@ -2780,7 +2884,7 @@ function renderAdminSettings(body){
 function setOrderLayout(mode){
   appSettings.orderLayout = mode;
   renderAdminSettings(document.getElementById('adminBody'));
-  db.from('settings').upsert({key:'app', value: appSettings})
+  db.from('settings').upsert({restaurant_id: currentRestaurantId, key:'app', value: appSettings}, {onConflict: 'restaurant_id,key'})
     .then(({error})=>{ if(error) console.error('setOrderLayout error', error); });
 }
 function saveHardwareSettings(){
@@ -2792,7 +2896,7 @@ function saveHardwareSettings(){
     squareDeviceId: document.getElementById('set-squareDevice').value,
     squareAccessToken: document.getElementById('set-squareToken').value,
   };
-  db.from('settings').upsert({key:'hardware', value: hardwareSettings})
+  db.from('settings').upsert({restaurant_id: currentRestaurantId, key:'hardware', value: hardwareSettings}, {onConflict: 'restaurant_id,key'})
     .then(({error})=>{ if(error) console.error('saveHardwareSettings error', error); });
   const toast = document.getElementById('printerSaveToast');
   if(toast){
@@ -2868,7 +2972,15 @@ async function bootstrapApp(){
 renderPinGrid();
 renderPinDots();
 updateClock();
-bootstrapApp();
+
+(async function initApp(){
+  const hasSession = await checkExistingSession();
+  if(hasSession){
+    showScreen('screen-login');
+    bootstrapApp();
+  }
+  // else: stay on screen-auth (already active by default), waiting for login/register
+})();
 
 /* Auto-convert any [data-lucide] markers into inline SVG icons, including
    content rendered dynamically after every re-render. */
