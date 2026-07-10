@@ -13,14 +13,15 @@
     --paper-dark:#E5E5EA;
     --amber:#FF6A00;
     --amber-dark:#E85D00;
-    --herb:#30B84D;
-    --ember:#FF3B30;
+    --herb:#1C1C1E;
+    --ember:#1C1C1E;
     --slate:#8E8E93;
     --slate-line:#D1D1D6;
     --white:#FFFFFF;
   }
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
   button, [onclick]{touch-action:manipulation;}
+  .ico{width:1em; height:1em; display:inline-block; vertical-align:-0.15em; stroke-width:2; color:currentColor;}
   html,body{height:100%;}
   body{
     font-family:'Inter',sans-serif;
@@ -279,7 +280,7 @@
   .table-btn .tnum{font-size:22px; font-weight:700;}
   .table-btn .tstatus{font-size:9.5px; color:var(--herb); text-transform:uppercase; letter-spacing:1px;}
   .table-btn .tduration{font-size:9.5px; color:var(--ember); font-weight:700; margin-top:1px;}
-  .table-btn.occupied{background:#FFE5E3; border-color:var(--ember);}
+  .table-btn.occupied{background:#FFEDD9; border-color:var(--amber);}
   .table-btn.occupied .tstatus{color:var(--ember);}
   .table-btn:active{transform:scale(.96);}
 
@@ -354,9 +355,9 @@
     text-transform:uppercase; letter-spacing:.3px;
   }
   .rc-status.unpaid{background:#FFEDD9; color:var(--amber-dark);}
-  .rc-status.paid{background:#E3F9E7; color:var(--herb);}
-  .rc-status.held{background:#EAE6F7; color:#7A5FB5;}
-  .rc-status.cancelled{background:#FFE5E3; color:var(--ember);}
+  .rc-status.paid{background:var(--ink); color:var(--white);}
+  .rc-status.held{background:var(--paper-dark); color:var(--ink);}
+  .rc-status.cancelled{background:var(--paper-dark); color:var(--slate);}
   .recall-card .rc-main{font-weight:700; font-size:14px; line-height:1.3; margin-top:6px;}
   .recall-card .rc-sub{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--slate); margin-top:4px;}
   .recall-card .rc-total{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--amber-dark); font-size:15px; margin-top:auto;}
@@ -523,7 +524,7 @@
   .status-banner{margin:0 16px 10px; padding:9px 12px; border-radius:8px; font-size:12px; font-weight:600; display:none; align-items:center; gap:6px;}
   .status-banner.show{display:flex;}
   .status-fired{background:#FFEDD9; color:var(--amber-dark);}
-  .status-paid{background:#E3F9E7; color:var(--herb);}
+  .status-paid{background:var(--ink); color:var(--white);}
 
   /* ================= MODAL ================= */
   .modal-overlay{position:fixed; inset:0; background:rgba(35,32,27,.55); display:none; align-items:center; justify-content:center; z-index:50;}
@@ -602,7 +603,7 @@
   .settings-form{background:var(--white); border:1.5px solid var(--slate-line); border-radius:14px; padding:22px; max-width:480px;}
   .settings-form .field{margin-bottom:14px;}
   .settings-note{font-size:11.5px; color:var(--slate); margin-top:-8px; margin-bottom:14px; line-height:1.5;}
-  .save-toast{display:none; background:#E3F9E7; color:var(--herb); border-radius:8px; padding:9px 12px; font-size:12.5px; font-weight:600; margin-top:10px;}
+  .save-toast{display:none; background:#FFEDD9; color:var(--amber-dark); border-radius:8px; padding:9px 12px; font-size:12.5px; font-weight:600; margin-top:10px;}
   .save-toast.show{display:block;}
 
   .layout-picker{display:flex; gap:16px; margin-bottom:10px;}
@@ -714,7 +715,7 @@
 
 <!-- Caller ID incoming call banner -->
 <div class="callerid-banner" id="calleridBanner">
-  <div class="ci-icon">📞</div>
+  <div class="ci-icon"><i data-lucide="phone" class="ico"></i></div>
   <div class="ci-body">
     <div class="ci-num" id="ciNum"></div>
     <div class="ci-name" id="ciName"></div>
@@ -729,8 +730,8 @@
 <!-- ============ LOGIN ============ -->
 <div class="screen active" id="screen-login">
   <div class="login-brand">
-    <div class="mark">铺</div>
-    <div class="sub">Staff Terminal · 员工登录</div>
+    <div class="mark" id="txt-brand-mark">铺</div>
+    <div class="sub" id="txt-brand-sub">Staff Terminal · 员工登录</div>
   </div>
   <div class="pin-panel">
     <div class="pin-label" id="pinLabel">请输入密码 Enter your PIN</div>
@@ -748,41 +749,41 @@
     </div>
     <div style="display:flex; align-items:center;">
       <div class="clock" id="clockDisplay"></div>
-      <button class="simcall-btn" onclick="simulateIncomingCall()">☎ 模拟来电 Test Call</button>
-      <button class="simcall-btn" onclick="openAdminGate()">⚙ 管理后台 Admin</button>
+      <button class="simcall-btn" onclick="simulateIncomingCall()"><i data-lucide="phone-call" class="ico"></i> 模拟来电 Test Call</button>
+      <button class="simcall-btn" onclick="openAdminGate()"><i data-lucide="settings" class="ico"></i> 管理后台 Admin</button>
       <button class="logout-btn" onclick="logout()">登出 Logout</button>
     </div>
   </div>
   <div class="home-grid">
     <div class="home-tile accent" onclick="goTables()">
-      <div class="icon">🍽️</div>
-      <div class="label">堂食</div>
-      <div class="label-en">DINE IN</div>
+      <div class="icon"><i data-lucide="utensils" class="ico"></i></div>
+      <div class="label" id="txt-tile-dinein-cn">堂食</div>
+      <div class="label-en" id="txt-tile-dinein-en">DINE IN</div>
     </div>
     <div class="home-tile" onclick="goCustomerForm('to-go')">
-      <div class="icon">🛍️</div>
-      <div class="label">外带</div>
-      <div class="label-en">TO GO</div>
+      <div class="icon"><i data-lucide="shopping-bag" class="ico"></i></div>
+      <div class="label" id="txt-tile-togo-cn">外带</div>
+      <div class="label-en" id="txt-tile-togo-en">TO GO</div>
     </div>
     <div class="home-tile" onclick="goCustomerForm('pickup')">
-      <div class="icon">📞</div>
-      <div class="label">自取</div>
-      <div class="label-en">PICK UP</div>
+      <div class="icon"><i data-lucide="phone" class="ico"></i></div>
+      <div class="label" id="txt-tile-pickup-cn">自取</div>
+      <div class="label-en" id="txt-tile-pickup-en">PICK UP</div>
     </div>
     <div class="home-tile" onclick="goCustomerForm('delivery')">
-      <div class="icon">🛵</div>
-      <div class="label">外送</div>
-      <div class="label-en">DELIVERY</div>
+      <div class="icon"><i data-lucide="bike" class="ico"></i></div>
+      <div class="label" id="txt-tile-delivery-cn">外送</div>
+      <div class="label-en" id="txt-tile-delivery-en">DELIVERY</div>
     </div>
     <div class="home-tile" onclick="goRecall()">
-      <div class="icon">🗂️</div>
-      <div class="label">调出订单</div>
-      <div class="label-en">RECALL</div>
+      <div class="icon"><i data-lucide="folder-open" class="ico"></i></div>
+      <div class="label" id="txt-tile-recall-cn">调出订单</div>
+      <div class="label-en" id="txt-tile-recall-en">RECALL</div>
     </div>
     <div class="home-tile" onclick="openDrawer()">
-      <div class="icon">🗄️</div>
-      <div class="label">打开钱箱</div>
-      <div class="label-en">OPEN DRAWER</div>
+      <div class="icon"><i data-lucide="archive" class="ico"></i></div>
+      <div class="label" id="txt-tile-drawer-cn">打开钱箱</div>
+      <div class="label-en" id="txt-tile-drawer-en">OPEN DRAWER</div>
     </div>
   </div>
 </div>
@@ -791,7 +792,7 @@
 <div class="screen" id="screen-tables">
   <div class="subpage-header">
     <button class="back-btn" onclick="goHome()">← 返回 Back</button>
-    <h1>选择桌号 Select Table</h1>
+    <h1 id="txt-title-tables">选择桌号 Select Table</h1>
   </div>
   <div class="table-grid" id="tableGrid"></div>
 </div>
@@ -813,7 +814,7 @@
       <input type="tel" id="custPhone" placeholder="e.g. (555) 123-4567" oninput="lookupCustomer(this.value)">
     </div>
     <div class="customer-hint" id="customerHint">
-      <div class="ch-text">👤 老顾客 <b id="chName"></b> · <span id="chSub"></span></div>
+      <div class="ch-text"><i data-lucide="user" class="ico"></i> 老顾客 <b id="chName"></b> · <span id="chSub"></span></div>
       <button onclick="applyCustomerHint()">使用 Use</button>
     </div>
     <div class="field" id="addressField" style="display:none;">
@@ -828,7 +829,7 @@
 <div class="screen" id="screen-recall">
   <div class="subpage-header">
     <button class="back-btn" onclick="goHome()">← 返回 Back</button>
-    <h1>调出订单 Recall Orders</h1>
+    <h1 id="txt-title-recall">调出订单 Recall Orders</h1>
   </div>
   <div class="recall-layout">
     <div class="recall-main">
@@ -869,13 +870,13 @@
           <div class="totals-row grand"><span>总计 Total</span><span id="total">$0.00</span></div>
         </div>
         <div class="ticket-actions">
-          <button class="tbtn" id="exitTicketBtn" onclick="exitOrderToHome()"><span class="tb-icon">🏠</span><span class="tb-label">退出</span></button>
-          <button class="tbtn tbtn-danger" id="cancelBtn"><span class="tb-icon">🗑️</span><span class="tb-label">删单</span></button>
-          <button class="tbtn" id="holdBtn"><span class="tb-icon">💾</span><span class="tb-label">保存</span></button>
-          <button class="tbtn tbtn-pay" id="payBtn" disabled><span class="tb-icon">💳</span><span class="tb-label">付款</span></button>
-          <button class="tbtn tbtn-fire" id="fireBtn"><span class="tb-icon">🔥</span><span class="tb-label">送厨</span></button>
+          <button class="tbtn" id="exitTicketBtn" onclick="exitOrderToHome()"><span class="tb-icon"><i data-lucide="home" class="ico"></i></span><span class="tb-label">退出</span></button>
+          <button class="tbtn tbtn-danger" id="cancelBtn"><span class="tb-icon"><i data-lucide="trash-2" class="ico"></i></span><span class="tb-label">删单</span></button>
+          <button class="tbtn" id="holdBtn"><span class="tb-icon"><i data-lucide="save" class="ico"></i></span><span class="tb-label">保存</span></button>
+          <button class="tbtn tbtn-pay" id="payBtn" disabled><span class="tb-icon"><i data-lucide="credit-card" class="ico"></i></span><span class="tb-label">付款</span></button>
+          <button class="tbtn tbtn-fire" id="fireBtn"><span class="tb-icon"><i data-lucide="flame" class="ico"></i></span><span class="tb-label">送厨</span></button>
         </div>
-        <button class="btn btn-print" id="printBtn" style="display:none;">🖨️ 打印小票 Print Ticket</button>
+        <button class="btn btn-print" id="printBtn" style="display:none;"><i data-lucide="printer" class="ico"></i> 打印小票 Print Ticket</button>
         <button class="btn btn-new" id="newBtn" style="display:none; margin:0 16px 14px;">＋ 新订单 New Order</button>
       </div>
       <div class="ticket-siderail" id="ticketSiderail"></div>
@@ -886,12 +887,13 @@
 <!-- ============ ADMIN ============ -->
 <div class="screen" id="screen-admin">
   <div class="admin-nav">
-    <div class="an-title">⚙ 管理后台</div>
-    <button class="admin-tab" data-tab="menu" onclick="switchAdminTab('menu')">🍜 菜单管理 Menu</button>
-    <button class="admin-tab" data-tab="reports" onclick="switchAdminTab('reports')">📊 销售报表 Reports</button>
-    <button class="admin-tab" data-tab="staff" onclick="switchAdminTab('staff')">👤 员工账号 Staff</button>
-    <button class="admin-tab" data-tab="history" onclick="switchAdminTab('history')">🧾 历史订单 Orders</button>
-    <button class="admin-tab" data-tab="settings" onclick="switchAdminTab('settings')">🖨 打印/刷卡设置</button>
+    <div class="an-title"><i data-lucide="settings" class="ico"></i> 管理后台</div>
+    <button class="admin-tab" data-tab="menu" onclick="switchAdminTab('menu')"><i data-lucide="soup" class="ico"></i> 菜单管理 Menu</button>
+    <button class="admin-tab" data-tab="reports" onclick="switchAdminTab('reports')"><i data-lucide="bar-chart-3" class="ico"></i> 销售报表 Reports</button>
+    <button class="admin-tab" data-tab="staff" onclick="switchAdminTab('staff')"><i data-lucide="user" class="ico"></i> 员工账号 Staff</button>
+    <button class="admin-tab" data-tab="history" onclick="switchAdminTab('history')"><i data-lucide="receipt" class="ico"></i> 历史订单 Orders</button>
+    <button class="admin-tab" data-tab="text" onclick="switchAdminTab('text')"><i data-lucide="type" class="ico"></i> 文案管理 Text</button>
+    <button class="admin-tab" data-tab="settings" onclick="switchAdminTab('settings')"><i data-lucide="printer" class="ico"></i> 打印/刷卡设置</button>
     <button class="an-exit" onclick="goHome()">← 退出后台</button>
   </div>
   <div class="admin-body" id="adminBody"></div>
@@ -919,7 +921,7 @@
     <div class="pay-top">
       <span class="pay-top-label">应付</span>
       <span class="pay-top-amount">$<span id="payDue">0.00</span></span>
-      <button class="pay-close" onclick="closePaymentScreen()">✕</button>
+      <button class="pay-close" onclick="closePaymentScreen()"><i data-lucide="x" class="ico"></i></button>
     </div>
     <div class="pay-body">
       <div class="pay-col">
@@ -927,8 +929,8 @@
         <div class="pay-cash-grid" id="payCashGrid"></div>
         <div class="pay-section-title">刷卡 &amp; 其他 Card &amp; Other</div>
         <div class="pay-other-grid">
-          <button class="pay-other-btn pay-card" onclick="startCardPayment()">💳<br>刷卡 Card</button>
-          <button class="pay-other-btn" onclick="stubPayment('礼品卡 Gift Card')">🎁<br>礼品卡</button>
+          <button class="pay-other-btn pay-card" onclick="startCardPayment()"><i data-lucide="credit-card" class="ico"></i><br>刷卡 Card</button>
+          <button class="pay-other-btn" onclick="stubPayment('礼品卡 Gift Card')"><i data-lucide="gift" class="ico"></i><br>礼品卡</button>
           <button class="pay-other-btn" onclick="applyVipDiscount()">⭐<br>VIP</button>
           <button class="pay-other-btn" onclick="stubPayment('退款 Refund')">↩️<br>Refund</button>
         </div>
@@ -963,6 +965,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <script>
 /* ===================== SUPABASE ===================== */
 const SUPABASE_URL = "https://kqeraivpbujrbrqoxkwr.supabase.co";
@@ -1010,6 +1013,29 @@ function applyOrderLayout(){
   const el = document.getElementById('screen-order');
   el.classList.remove('layout-top','layout-right');
   el.classList.add('layout-' + appSettings.orderLayout);
+}
+
+/* ===================== EDITABLE UI TEXT (Admin ▸ Text) =====================
+   Every string here maps to an element id in the HTML. Admin can edit any of
+   these in the backend; changes apply immediately and persist to Supabase. */
+const uiTextDefaults = {
+  'txt-brand-mark': '铺',
+  'txt-brand-sub': 'Staff Terminal · 员工登录',
+  'txt-tile-dinein-cn': '堂食', 'txt-tile-dinein-en': 'DINE IN',
+  'txt-tile-togo-cn': '外带', 'txt-tile-togo-en': 'TO GO',
+  'txt-tile-pickup-cn': '自取', 'txt-tile-pickup-en': 'PICK UP',
+  'txt-tile-delivery-cn': '外送', 'txt-tile-delivery-en': 'DELIVERY',
+  'txt-tile-recall-cn': '调出订单', 'txt-tile-recall-en': 'RECALL',
+  'txt-tile-drawer-cn': '打开钱箱', 'txt-tile-drawer-en': 'OPEN DRAWER',
+  'txt-title-tables': '选择桌号 Select Table',
+  'txt-title-recall': '调出订单 Recall Orders',
+};
+let uiText = {...uiTextDefaults};
+function applyUiText(){
+  Object.keys(uiText).forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.textContent = uiText[id];
+  });
 }
 
 /* ===================== CALLER ID / CUSTOMER HISTORY =====================
@@ -1191,7 +1217,7 @@ function openDrawer(){
   const content = document.getElementById('modalContent');
   overlay.classList.add('show');
   content.innerHTML = `
-    <div class="drawer-icon">🗄️</div>
+    <div class="drawer-icon"><i data-lucide="archive" class="ico"></i></div>
     <h3>钱箱已打开</h3>
     <p>Cash drawer opened. 请记得核对现金。</p>
     <button class="modal-close" onclick="closeModal()">关闭 Close</button>
@@ -1463,21 +1489,21 @@ function renderTicketSiderail(){
   const wrap = document.getElementById('ticketSiderail');
   if(ticketMode==='review'){
     wrap.innerHTML = `
-      <button class="sr-btn" onclick="switchToEditMode()"><span class="sr-icon">✏️</span><span class="sr-label">编辑</span></button>
-      <button class="sr-btn" onclick="printKitchenTicket()"><span class="sr-icon">🖨️</span><span class="sr-label">打印</span></button>
-      <button class="sr-btn" onclick="openPaymentScreen()"><span class="sr-icon">💳</span><span class="sr-label">付款</span></button>
-      <button class="sr-btn" onclick="splitBillHelper()"><span class="sr-icon">➗</span><span class="sr-label">分单</span></button>
-      <button class="sr-btn" onclick="openAdjustModal('discount', renderTicket)"><span class="sr-icon">🏷️</span><span class="sr-label">折扣</span></button>
-      <button class="sr-btn" onclick="openCustomerInfoModal()"><span class="sr-icon">🪪</span><span class="sr-label">客人<br>信息</span></button>
+      <button class="sr-btn" onclick="switchToEditMode()"><span class="sr-icon"><i data-lucide="pencil" class="ico"></i></span><span class="sr-label">编辑</span></button>
+      <button class="sr-btn" onclick="printKitchenTicket()"><span class="sr-icon"><i data-lucide="printer" class="ico"></i></span><span class="sr-label">打印</span></button>
+      <button class="sr-btn" onclick="openPaymentScreen()"><span class="sr-icon"><i data-lucide="credit-card" class="ico"></i></span><span class="sr-label">付款</span></button>
+      <button class="sr-btn" onclick="splitBillHelper()"><span class="sr-icon"><i data-lucide="divide" class="ico"></i></span><span class="sr-label">分单</span></button>
+      <button class="sr-btn" onclick="openAdjustModal('discount', renderTicket)"><span class="sr-icon"><i data-lucide="tag" class="ico"></i></span><span class="sr-label">折扣</span></button>
+      <button class="sr-btn" onclick="openCustomerInfoModal()"><span class="sr-icon"><i data-lucide="id-card" class="ico"></i></span><span class="sr-label">客人<br>信息</span></button>
     `;
   } else {
     wrap.innerHTML = `
-      <button class="sr-btn" onclick="openCustomerInfoModal()"><span class="sr-icon">🪪</span><span class="sr-label">客人<br>信息</span></button>
-      <button class="sr-btn" onclick="openOrderTypeModal()"><span class="sr-icon">📋</span><span class="sr-label">订单<br>类型</span></button>
-      <button class="sr-btn" onclick="openChangeTableModal()"><span class="sr-icon">🪑</span><span class="sr-label">换桌</span></button>
-      <button class="sr-btn" onclick="openServerModal()"><span class="sr-icon">🧑</span><span class="sr-label">服务员</span></button>
-      <button class="sr-btn" onclick="openGuestModal()"><span class="sr-icon">👥</span><span class="sr-label">人数</span></button>
-      <button class="sr-btn" onclick="openNoteModal()"><span class="sr-icon">📝</span><span class="sr-label">备注</span></button>
+      <button class="sr-btn" onclick="openCustomerInfoModal()"><span class="sr-icon"><i data-lucide="id-card" class="ico"></i></span><span class="sr-label">客人<br>信息</span></button>
+      <button class="sr-btn" onclick="openOrderTypeModal()"><span class="sr-icon"><i data-lucide="clipboard-list" class="ico"></i></span><span class="sr-label">订单<br>类型</span></button>
+      <button class="sr-btn" onclick="openChangeTableModal()"><span class="sr-icon"><i data-lucide="armchair" class="ico"></i></span><span class="sr-label">换桌</span></button>
+      <button class="sr-btn" onclick="openServerModal()"><span class="sr-icon"><i data-lucide="user-round" class="ico"></i></span><span class="sr-label">服务员</span></button>
+      <button class="sr-btn" onclick="openGuestModal()"><span class="sr-icon"><i data-lucide="users" class="ico"></i></span><span class="sr-label">人数</span></button>
+      <button class="sr-btn" onclick="openNoteModal()"><span class="sr-icon"><i data-lucide="file-text" class="ico"></i></span><span class="sr-label">备注</span></button>
     `;
   }
 }
@@ -1529,8 +1555,8 @@ function contextLabel(){
 function contextDetail(){
   if(!orderMeta) return '';
   if(orderMeta.type==='dine-in') return '';
-  let s = `📞 ${orderMeta.phone}`;
-  if(orderMeta.type==='delivery') s += ` · 📍 ${orderMeta.address}`;
+  let s = `<i data-lucide="phone" class="ico"></i> ${orderMeta.phone}`;
+  if(orderMeta.type==='delivery') s += ` · <i data-lucide="map-pin" class="ico"></i> ${orderMeta.address}`;
   return s;
 }
 
@@ -1716,11 +1742,11 @@ function renderCtxLine(){
   parts.push(`<span>${typeLabel}</span>`);
   if(orderMeta.type==='dine-in' && orderMeta.table) parts.push(`<span>桌 <b>${orderMeta.table}</b></span>`);
   if(orderMeta.name) parts.push(`<span><b>${orderMeta.name}</b></span>`);
-  if(orderMeta.phone && orderMeta.phone!=='--') parts.push(`<span>📞 ${orderMeta.phone}</span>`);
-  if(orderMeta.address) parts.push(`<span>📍 ${orderMeta.address}</span>`);
+  if(orderMeta.phone && orderMeta.phone!=='--') parts.push(`<span><i data-lucide="phone" class="ico"></i> ${orderMeta.phone}</span>`);
+  if(orderMeta.address) parts.push(`<span><i data-lucide="map-pin" class="ico"></i> ${orderMeta.address}</span>`);
   if(orderMeta.serverName) parts.push(`<span>服务员 <b>${orderMeta.serverName}</b></span>`);
-  if(orderMeta.guestCount) parts.push(`<span>👥 <b>${orderMeta.guestCount}</b></span>`);
-  if(orderMeta.note) parts.push(`<span style="color:var(--ember);">📝 ${orderMeta.note}</span>`);
+  if(orderMeta.guestCount) parts.push(`<span><i data-lucide="users" class="ico"></i> <b>${orderMeta.guestCount}</b></span>`);
+  if(orderMeta.note) parts.push(`<span style="color:var(--ember);"><i data-lucide="file-text" class="ico"></i> ${orderMeta.note}</span>`);
   wrap.innerHTML = parts.join('');
 }
 function renderTicket(){
@@ -1742,14 +1768,14 @@ function renderTicket(){
       if(line.type==='breakline'){
         const bl = document.createElement('div');
         bl.className = 'breakline-row';
-        bl.innerHTML = `<span>┈┈┈ 分割线 ┈┈┈</span>${!locked ? `<button class="line-remove" onclick="removeLine(${line.id})">✕</button>`:''}`;
+        bl.innerHTML = `<span>┈┈┈ 分割线 ┈┈┈</span>${!locked ? `<button class="line-remove" onclick="removeLine(${line.id})"><i data-lucide="x" class="ico"></i></button>`:''}`;
         ticketBody.appendChild(bl);
         return;
       }
 
       const row = document.createElement('div');
       row.className = 'line' + (line.id===selectedLineId ? ' selected':'');
-      const extras = [line.modifier ? '🧂 '+line.modifier : '', line.note ? '📝 '+line.note : ''].filter(Boolean);
+      const extras = [line.modifier ? '<i data-lucide="sparkles" class="ico"></i> '+line.modifier : '', line.note ? '<i data-lucide="file-text" class="ico"></i> '+line.note : ''].filter(Boolean);
       row.innerHTML = `
         <div class="line-tap" onclick="toggleSelectLine(${line.id})">
           <div class="line-main">
@@ -1758,7 +1784,7 @@ function renderTicket(){
           </div>
           <div class="line-price">$${(line.price*line.qty).toFixed(2)}</div>
         </div>
-        ${!locked ? `<button class="line-remove" onclick="removeLine(${line.id})">✕</button>` : ''}
+        ${!locked ? `<button class="line-remove" onclick="removeLine(${line.id})"><i data-lucide="x" class="ico"></i></button>` : ''}
       `;
       ticketBody.appendChild(row);
 
@@ -1770,9 +1796,9 @@ function renderTicket(){
           <button onclick="changeQty(${line.id},1)"><span class="la-icon">＋</span>加1</button>
           <button onclick="openQtyModal(${line.id})"><span class="la-icon">#</span>数量</button>
           <button onclick="changeQty(${line.id},-1)"><span class="la-icon">－</span>减1</button>
-          <button onclick="openLineNoteModal(${line.id})"><span class="la-icon">📝</span>备注</button>
-          <button onclick="openModifierModal(${line.id})"><span class="la-icon">🧂</span>调味料</button>
-          <button onclick="openPriceModal(${line.id})"><span class="la-icon">💲</span>改价</button>
+          <button onclick="openLineNoteModal(${line.id})"><span class="la-icon"><i data-lucide="file-text" class="ico"></i></span>备注</button>
+          <button onclick="openModifierModal(${line.id})"><span class="la-icon"><i data-lucide="sparkles" class="ico"></i></span>调味料</button>
+          <button onclick="openPriceModal(${line.id})"><span class="la-icon"><i data-lucide="dollar-sign" class="ico"></i></span>改价</button>
         `;
         ticketBody.appendChild(panel);
       }
@@ -1807,7 +1833,7 @@ document.getElementById('fireBtn').onclick = async ()=>{
   document.getElementById('ticketNo').textContent = `ORDER #${orderMeta.orderNo} · 已送厨房`;
   const banner = document.getElementById('statusBanner');
   banner.className = 'status-banner show status-fired';
-  banner.textContent = '🔥 订单已发送到厨房，等待制作';
+  banner.innerHTML = '<i data-lucide="flame" class="ico"></i> 订单已发送到厨房，等待制作';
   document.getElementById('newBtn').style.display = 'none';
   renderTicket();
   await updateOrderInDB(currentOrderNo, {status:'fired'});
@@ -2223,14 +2249,14 @@ function startCardPayment(){
     saveCustomerHistory(orderMeta, order);
     await finalizePaidOrder({method:'card', ...payAdjustments, cashReceived:null, changeDue:null});
     content.innerHTML = `
-      <div class="checkmark">✓</div>
+      <div class="checkmark"><i data-lucide="check" class="ico"></i></div>
       <h3>支付成功</h3>
       <p>已通过 Square Terminal 收款 $${due.toFixed(2)}，收据已从设备打印</p>
       <button class="modal-close" onclick="closeModal()">完成 Done</button>
     `;
     const banner = document.getElementById('statusBanner');
     banner.className = 'status-banner show status-paid';
-    banner.textContent = '✓ 已支付完成';
+    banner.innerHTML = '<i data-lucide="check" class="ico"></i> 已支付完成';
     document.getElementById('newBtn').style.display = 'flex';
     renderTicket();
   }, 2200);
@@ -2240,14 +2266,14 @@ function showPaymentSuccess(message){
   const content = document.getElementById('modalContent');
   overlay.classList.add('show');
   content.innerHTML = `
-    <div class="checkmark">✓</div>
+    <div class="checkmark"><i data-lucide="check" class="ico"></i></div>
     <h3>支付成功</h3>
     <p>${message}</p>
     <button class="modal-close" onclick="closeModal()">完成 Done</button>
   `;
   const banner = document.getElementById('statusBanner');
   banner.className = 'status-banner show status-paid';
-  banner.textContent = '✓ 已支付完成';
+  banner.innerHTML = '<i data-lucide="check" class="ico"></i> 已支付完成';
   document.getElementById('newBtn').style.display = 'flex';
   renderTicket();
 }
@@ -2306,7 +2332,52 @@ function switchAdminTab(tab){
   else if(tab==='reports') renderAdminReports(body);
   else if(tab==='staff') renderAdminStaff(body);
   else if(tab==='history') renderAdminHistory(body);
+  else if(tab==='text') renderAdminText(body);
   else if(tab==='settings') renderAdminSettings(body);
+}
+
+/* ===================== ADMIN: TEXT / LABELS MANAGEMENT ===================== */
+function renderAdminText(body){
+  const groups = [
+    ['登录页 Login', ['txt-brand-mark','txt-brand-sub']],
+    ['首页按钮 Home Tiles', [
+      'txt-tile-dinein-cn','txt-tile-dinein-en',
+      'txt-tile-togo-cn','txt-tile-togo-en',
+      'txt-tile-pickup-cn','txt-tile-pickup-en',
+      'txt-tile-delivery-cn','txt-tile-delivery-en',
+      'txt-tile-recall-cn','txt-tile-recall-en',
+      'txt-tile-drawer-cn','txt-tile-drawer-en',
+    ]],
+    ['页面标题 Screen Titles', ['txt-title-tables','txt-title-recall']],
+  ];
+  let html = `<h2>文案管理 Text Management</h2>
+    <p style="color:var(--slate); font-size:12.5px; margin-bottom:16px;">这里能改的是目前系统里已经接好的一批常用文字，改完立即生效并保存。之后可以继续往这里加更多可编辑的字段。</p>`;
+  groups.forEach(([title, ids])=>{
+    html += `<div class="admin-section"><h3>${title}</h3><table class="admin-table"><tbody>`;
+    ids.forEach(id=>{
+      html += `<tr><td style="width:200px; color:var(--slate); font-size:12px;">${id}</td>
+        <td><input type="text" value="${(uiText[id]||'').replace(/"/g,'&quot;')}" onchange="updateUiText('${id}', this.value)"></td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+  });
+  html += `<div class="admin-section">
+    <button class="admin-btn" onclick="resetUiText()">恢复默认文字 Reset to Defaults</button>
+  </div>`;
+  body.innerHTML = html;
+}
+function updateUiText(id, val){
+  uiText[id] = val;
+  applyUiText();
+  db.from('settings').upsert({key:'ui_text', value: uiText})
+    .then(({error})=>{ if(error) console.error('updateUiText error', error); });
+}
+function resetUiText(){
+  if(!confirm('确定要恢复全部默认文字吗？Reset all text to defaults?')) return;
+  uiText = {...uiTextDefaults};
+  applyUiText();
+  db.from('settings').upsert({key:'ui_text', value: uiText})
+    .then(({error})=>{ if(error) console.error('resetUiText error', error); });
+  renderAdminText(document.getElementById('adminBody'));
 }
 
 /* ===================== ADMIN: MENU MANAGEMENT ===================== */
@@ -2340,7 +2411,7 @@ function renderAdminMenu(body){
       html += `<tr>
         <td><input type="text" value="${item.name}" onchange="updateMenuItem('${cat}',${idx},'name',this.value)"></td>
         <td><input type="number" step="0.01" value="${item.price.toFixed(2)}" onchange="updateMenuItem('${cat}',${idx},'price',this.value)"></td>
-        <td><button class="row-del" onclick="deleteMenuItem('${cat}',${idx})">✕</button></td>
+        <td><button class="row-del" onclick="deleteMenuItem('${cat}',${idx})"><i data-lucide="x" class="ico"></i></button></td>
       </tr>`;
     });
     html += `</tbody></table>
@@ -2478,7 +2549,7 @@ function renderAdminStaff(body){
         <option value="staff" ${a.role==='staff'?'selected':''}>员工 Staff</option>
         <option value="manager" ${a.role==='manager'?'selected':''}>管理员 Manager</option>
       </select></td>
-      <td><button class="row-del" onclick="deleteStaff(${idx})">✕</button></td>
+      <td><button class="row-del" onclick="deleteStaff(${idx})"><i data-lucide="x" class="ico"></i></button></td>
     </tr>`;
   });
   html += `</tbody></table>
@@ -2601,7 +2672,7 @@ function renderAdminSettings(body){
           </select></div>
         <div class="settings-note">当前打印用的是浏览器打印(window.print)。接入真实小票/厨房打印机需要一个本地打印服务(监听 ESC/POS 指令),这里先保存配置，方便以后接入。</div>
         <button class="admin-btn save" onclick="saveHardwareSettings()">保存设置 Save</button>
-        <div class="save-toast" id="printerSaveToast">✓ 已保存 Saved</div>
+        <div class="save-toast" id="printerSaveToast"><i data-lucide="check" class="ico"></i> 已保存 Saved</div>
       </div>
     </div>
     <div class="admin-section">
@@ -2693,7 +2764,9 @@ async function bootstrapApp(){
     settingsRows.forEach(row=>{
       if(row.key==='hardware') hardwareSettings = {...hardwareSettings, ...row.value};
       if(row.key==='app') appSettings = {...appSettings, ...row.value};
+      if(row.key==='ui_text') uiText = {...uiTextDefaults, ...row.value};
     });
+    applyUiText();
 
     // Customer history (for caller ID recognition)
     await loadCustomersFromDB();
@@ -2709,6 +2782,14 @@ renderPinGrid();
 renderPinDots();
 updateClock();
 bootstrapApp();
+
+/* Auto-convert any [data-lucide] markers into inline SVG icons, including
+   content rendered dynamically after every re-render. */
+if(window.lucide){
+  lucide.createIcons();
+  const iconObserver = new MutationObserver(()=>{ lucide.createIcons(); });
+  iconObserver.observe(document.body, {childList:true, subtree:true});
+}
 
 </script>
 
