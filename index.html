@@ -1869,9 +1869,9 @@ function openCustomerInfoModal(onSave){
       <h3>客人信息 Customer Info</h3>
       <p>堂食订单 · 桌号 ${orderMeta.table}</p>
       <div class="field"><label style="display:block; font-size:12px; color:var(--slate); margin-bottom:6px;">顾客姓名(可选) Name (optional)</label>
-        <input type="text" id="ciName" value="${orderMeta.name||''}" placeholder="e.g. Smith party" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
+        <input type="text" id="custInfoName" value="${orderMeta.name||''}" placeholder="e.g. Smith party" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
       <div class="field" style="margin-top:10px;"><label style="display:block; font-size:12px; color:var(--slate); margin-bottom:6px;">电话(可选) Phone (optional)</label>
-        <input type="tel" id="ciPhone" value="${orderMeta.phone && orderMeta.phone!=='--' ? orderMeta.phone : ''}" placeholder="e.g. (555) 123-4567" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
+        <input type="tel" id="custInfoPhone" value="${orderMeta.phone && orderMeta.phone!=='--' ? orderMeta.phone : ''}" placeholder="e.g. (555) 123-4567" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
       <button type="button" class="modal-close" onclick="saveCustomerInfo()">保存 Save</button>
     `;
   } else {
@@ -1879,23 +1879,23 @@ function openCustomerInfoModal(onSave){
       <h3>客人信息 Customer Info</h3>
       <p>${orderMeta.type.toUpperCase()} 订单</p>
       <div class="field"><label style="display:block; font-size:12px; color:var(--slate); margin-bottom:6px;">顾客姓名 Name</label>
-        <input type="text" id="ciName" value="${orderMeta.name||''}" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
+        <input type="text" id="custInfoName" value="${orderMeta.name||''}" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
       <div class="field" style="margin-top:10px;"><label style="display:block; font-size:12px; color:var(--slate); margin-bottom:6px;">电话 Phone</label>
-        <input type="tel" id="ciPhone" value="${orderMeta.phone && orderMeta.phone!=='--' ? orderMeta.phone : ''}" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
+        <input type="tel" id="custInfoPhone" value="${orderMeta.phone && orderMeta.phone!=='--' ? orderMeta.phone : ''}" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
       ${orderMeta.type==='delivery' ? `<div class="field" style="margin-top:10px;"><label style="display:block; font-size:12px; color:var(--slate); margin-bottom:6px;">送餐地址 Address</label>
-        <input type="text" id="ciAddress" value="${orderMeta.address||''}" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
+        <input type="text" id="custInfoAddress" value="${orderMeta.address||''}" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
         <div class="field" style="margin-top:10px;"><label style="display:block; font-size:12px; color:var(--slate); margin-bottom:6px;">司机(可选) Driver (optional)</label>
-        <input type="text" id="ciDriver" value="${orderMeta.driverName||''}" placeholder="e.g. Mike" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>` : ''}
+        <input type="text" id="custInfoDriver" value="${orderMeta.driverName||''}" placeholder="e.g. Mike" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>` : ''}
       <button type="button" class="modal-close" onclick="saveCustomerInfo()">保存 Save</button>
     `;
   }
 }
 async function saveCustomerInfo(){
   try{
-    const name = document.getElementById('ciName').value.trim();
-    const phone = document.getElementById('ciPhone').value.trim();
-    const addressEl = document.getElementById('ciAddress');
-    const driverEl = document.getElementById('ciDriver');
+    const name = document.getElementById('custInfoName').value.trim();
+    const phone = document.getElementById('custInfoPhone').value.trim();
+    const addressEl = document.getElementById('custInfoAddress');
+    const driverEl = document.getElementById('custInfoDriver');
     const address = addressEl ? addressEl.value.trim() : orderMeta.address;
     const driver = driverEl ? driverEl.value.trim() : orderMeta.driverName;
     orderMeta.name = name || orderMeta.name;
