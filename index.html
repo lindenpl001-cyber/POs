@@ -22,6 +22,8 @@
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
   button, [onclick]{touch-action:manipulation;}
   .ico{width:1em; height:1em; display:inline-block; vertical-align:-0.15em; stroke-width:2; color:currentColor;}
+  body.lang-zh .i18n-en{display:none;}
+  body.lang-en .i18n-zh{display:none;}
   html,body{height:100%;}
   body{
     font-family:'Inter',sans-serif;
@@ -392,15 +394,16 @@
     padding:16px 0; gap:6px; overflow-y:auto;
   }
   #screen-order.layout-top .rail{
-    flex-direction:row; flex-wrap:wrap; align-items:flex-start; align-content:flex-start;
-    padding:10px 20px; gap:8px; max-height:118px; overflow-y:auto; overflow-x:hidden;
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr));
+    align-items:stretch; align-content:flex-start;
+    padding:14px 20px; gap:10px; max-height:168px; overflow-y:auto; overflow-x:hidden;
   }
   .rail-back{
     width:76px; padding:10px 4px; background:transparent; border:none; border-radius:12px;
     color:var(--amber); font-weight:700; font-size:11px; cursor:pointer; margin-bottom:10px;
     flex-shrink:0;
   }
-  #screen-order.layout-top .rail-back{width:auto; margin-bottom:0; padding:10px 14px;}
+  #screen-order.layout-top .rail-back{width:auto; margin-bottom:0; padding:10px 14px; grid-column:1/-1; justify-self:start;}
   .cat-btn{
     width:76px; padding:12px 4px; background:transparent; border:none; border-radius:12px;
     color:#98989D; font-family:'Inter',sans-serif; font-weight:600; font-size:11.5px;
@@ -408,17 +411,20 @@
     flex-shrink:0;
   }
   #screen-order.layout-top .cat-btn{
-    width:auto; flex-direction:row; padding:9px 15px; white-space:nowrap; border-radius:20px;
+    width:auto; aspect-ratio:1.3; flex-direction:column; justify-content:center;
+    padding:10px 6px; white-space:normal; text-align:center; border-radius:14px;
+    background:rgba(255,255,255,.06); font-size:13px; line-height:1.25;
   }
   .cat-btn .dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.55;}
   .cat-btn.active{background:var(--amber); color:var(--ink);}
   .cat-btn.active .dot{opacity:1;}
 
   .menu{grid-area:menu; background:var(--paper); padding:20px 24px 24px; overflow-y:auto;}
-  .group-tabs{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
+  .group-tabs{display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:10px; margin-bottom:16px;}
   .group-tab{
-    padding:8px 18px; border-radius:20px; border:1.5px solid var(--slate-line);
-    background:var(--white); color:var(--slate); font-weight:700; font-size:13px; cursor:pointer;
+    padding:14px 10px; border-radius:14px; border:1.5px solid var(--slate-line);
+    background:var(--white); color:var(--slate); font-weight:700; font-size:14.5px; cursor:pointer;
+    text-align:center;
   }
   .group-tab.active{background:var(--ink); color:var(--paper); border-color:var(--ink);}
   .menu-header{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px;}
@@ -459,13 +465,13 @@
   .empty-state .big{font-family:'Inter',sans-serif; font-size:16px; color:var(--ink); font-weight:600;}
   .line{border-bottom:1px solid #E5E5EA; position:relative;}
   .line.selected{background:#FFF3E5;}
-  .line-tap{display:flex; align-items:center; gap:9px; padding:12px 0; cursor:pointer;}
+  .line-tap{display:flex; align-items:center; gap:9px; padding:12px 22px 12px 0; cursor:pointer;}
   .line-main{flex:1;}
   .line-name{font-weight:700; font-size:13.5px;}
   .line-flag{font-size:11px; margin-left:2px;}
   .line-price{font-family:'IBM Plex Mono',monospace; font-size:12.5px; font-weight:600; color:var(--slate); white-space:nowrap;}
   .line-remove{
-    position:absolute; top:8px; right:-2px; background:none; border:none; color:var(--slate);
+    position:absolute; top:8px; right:0; background:none; border:none; color:var(--slate);
     font-size:14px; cursor:pointer; padding:4px 6px;
   }
   .line-detail{font-size:11.5px; color:var(--ember); padding:0 0 10px; font-style:italic;}
@@ -519,7 +525,7 @@
   }
   .sr-btn:active{background:rgba(255,255,255,.08);}
   .sr-btn .sr-icon{font-size:16px;}
-  .sr-btn .sr-label{font-size:9px; font-weight:700; line-height:1.2; text-align:center;}
+  .sr-btn .sr-label{font-size:9px; font-weight:700; line-height:1.3; text-align:center; display:flex; flex-direction:column;}
 
   .status-banner{margin:0 16px 10px; padding:9px 12px; border-radius:8px; font-size:12px; font-weight:600; display:none; align-items:center; gap:6px;}
   .status-banner.show{display:flex;}
@@ -757,33 +763,33 @@
   <div class="home-grid">
     <div class="home-tile accent" onclick="goTables()">
       <div class="icon"><i data-lucide="utensils" class="ico"></i></div>
-      <div class="label" id="txt-tile-dinein-cn">堂食</div>
-      <div class="label-en" id="txt-tile-dinein-en">DINE IN</div>
+      <div class="label i18n-zh" id="txt-tile-dinein-cn">堂食</div>
+      <div class="label-en i18n-en" id="txt-tile-dinein-en">DINE IN</div>
     </div>
     <div class="home-tile" onclick="goCustomerForm('to-go')">
       <div class="icon"><i data-lucide="shopping-bag" class="ico"></i></div>
-      <div class="label" id="txt-tile-togo-cn">外带</div>
-      <div class="label-en" id="txt-tile-togo-en">TO GO</div>
+      <div class="label i18n-zh" id="txt-tile-togo-cn">外带</div>
+      <div class="label-en i18n-en" id="txt-tile-togo-en">TO GO</div>
     </div>
     <div class="home-tile" onclick="goCustomerForm('pickup')">
       <div class="icon"><i data-lucide="phone" class="ico"></i></div>
-      <div class="label" id="txt-tile-pickup-cn">自取</div>
-      <div class="label-en" id="txt-tile-pickup-en">PICK UP</div>
+      <div class="label i18n-zh" id="txt-tile-pickup-cn">自取</div>
+      <div class="label-en i18n-en" id="txt-tile-pickup-en">PICK UP</div>
     </div>
     <div class="home-tile" onclick="goCustomerForm('delivery')">
       <div class="icon"><i data-lucide="bike" class="ico"></i></div>
-      <div class="label" id="txt-tile-delivery-cn">外送</div>
-      <div class="label-en" id="txt-tile-delivery-en">DELIVERY</div>
+      <div class="label i18n-zh" id="txt-tile-delivery-cn">外送</div>
+      <div class="label-en i18n-en" id="txt-tile-delivery-en">DELIVERY</div>
     </div>
     <div class="home-tile" onclick="goRecall()">
       <div class="icon"><i data-lucide="folder-open" class="ico"></i></div>
-      <div class="label" id="txt-tile-recall-cn">调出订单</div>
-      <div class="label-en" id="txt-tile-recall-en">RECALL</div>
+      <div class="label i18n-zh" id="txt-tile-recall-cn">调出订单</div>
+      <div class="label-en i18n-en" id="txt-tile-recall-en">RECALL</div>
     </div>
     <div class="home-tile" onclick="openDrawer()">
       <div class="icon"><i data-lucide="archive" class="ico"></i></div>
-      <div class="label" id="txt-tile-drawer-cn">打开钱箱</div>
-      <div class="label-en" id="txt-tile-drawer-en">OPEN DRAWER</div>
+      <div class="label i18n-zh" id="txt-tile-drawer-cn">打开钱箱</div>
+      <div class="label-en i18n-en" id="txt-tile-drawer-en">OPEN DRAWER</div>
     </div>
   </div>
 </div>
@@ -792,7 +798,7 @@
 <div class="screen" id="screen-tables">
   <div class="subpage-header">
     <button class="back-btn" onclick="goHome()">← 返回 Back</button>
-    <h1 id="txt-title-tables">选择桌号 Select Table</h1>
+    <h1><span class="i18n-zh" id="txt-title-tables-zh">选择桌号</span> <span class="i18n-en" id="txt-title-tables-en">Select Table</span></h1>
   </div>
   <div class="table-grid" id="tableGrid"></div>
 </div>
@@ -829,7 +835,7 @@
 <div class="screen" id="screen-recall">
   <div class="subpage-header">
     <button class="back-btn" onclick="goHome()">← 返回 Back</button>
-    <h1 id="txt-title-recall">调出订单 Recall Orders</h1>
+    <h1><span class="i18n-zh" id="txt-title-recall-zh">调出订单</span> <span class="i18n-en" id="txt-title-recall-en">Recall Orders</span></h1>
   </div>
   <div class="recall-layout">
     <div class="recall-main">
@@ -870,11 +876,11 @@
           <div class="totals-row grand"><span>总计 Total</span><span id="total">$0.00</span></div>
         </div>
         <div class="ticket-actions">
-          <button class="tbtn" id="exitTicketBtn" onclick="exitOrderToHome()"><span class="tb-icon"><i data-lucide="home" class="ico"></i></span><span class="tb-label">退出</span></button>
-          <button class="tbtn tbtn-danger" id="cancelBtn"><span class="tb-icon"><i data-lucide="trash-2" class="ico"></i></span><span class="tb-label">删单</span></button>
-          <button class="tbtn" id="holdBtn"><span class="tb-icon"><i data-lucide="save" class="ico"></i></span><span class="tb-label">保存</span></button>
-          <button class="tbtn tbtn-pay" id="payBtn" disabled><span class="tb-icon"><i data-lucide="credit-card" class="ico"></i></span><span class="tb-label">付款</span></button>
-          <button class="tbtn tbtn-fire" id="fireBtn"><span class="tb-icon"><i data-lucide="flame" class="ico"></i></span><span class="tb-label">送厨</span></button>
+          <button class="tbtn" id="exitTicketBtn" onclick="exitOrderToHome()"><span class="tb-icon"><i data-lucide="home" class="ico"></i></span><span class="tb-label"><span class="i18n-zh">退出</span><span class="i18n-en">Exit</span></span></button>
+          <button class="tbtn tbtn-danger" id="cancelBtn"><span class="tb-icon"><i data-lucide="trash-2" class="ico"></i></span><span class="tb-label"><span class="i18n-zh">删单</span><span class="i18n-en">Delete</span></span></button>
+          <button class="tbtn" id="holdBtn"><span class="tb-icon"><i data-lucide="save" class="ico"></i></span><span class="tb-label"><span class="i18n-zh">保存</span><span class="i18n-en">Save</span></span></button>
+          <button class="tbtn tbtn-pay" id="payBtn" disabled><span class="tb-icon"><i data-lucide="credit-card" class="ico"></i></span><span class="tb-label"><span class="i18n-zh">付款</span><span class="i18n-en">Pay</span></span></button>
+          <button class="tbtn tbtn-fire" id="fireBtn"><span class="tb-icon"><i data-lucide="flame" class="ico"></i></span><span class="tb-label"><span class="i18n-zh">送厨</span><span class="i18n-en">Send</span></span></button>
         </div>
         <button class="btn btn-print" id="printBtn" style="display:none;"><i data-lucide="printer" class="ico"></i> 打印小票 Print Ticket</button>
         <button class="btn btn-new" id="newBtn" style="display:none; margin:0 16px 14px;">＋ 新订单 New Order</button>
@@ -1008,7 +1014,7 @@ let hardwareSettings = {
 };
 
 /* Order screen layout — switchable in Admin ▸ Settings. */
-let appSettings = { orderLayout: "top" }; // 'top' | 'right'
+let appSettings = { orderLayout: "top", uiLang: "both" }; // orderLayout: 'top'|'right' · uiLang: 'zh'|'en'|'both'
 function applyOrderLayout(){
   const el = document.getElementById('screen-order');
   el.classList.remove('layout-top','layout-right');
@@ -1027,8 +1033,8 @@ const uiTextDefaults = {
   'txt-tile-delivery-cn': '外送', 'txt-tile-delivery-en': 'DELIVERY',
   'txt-tile-recall-cn': '调出订单', 'txt-tile-recall-en': 'RECALL',
   'txt-tile-drawer-cn': '打开钱箱', 'txt-tile-drawer-en': 'OPEN DRAWER',
-  'txt-title-tables': '选择桌号 Select Table',
-  'txt-title-recall': '调出订单 Recall Orders',
+  'txt-title-tables-zh': '选择桌号', 'txt-title-tables-en': 'Select Table',
+  'txt-title-recall-zh': '调出订单', 'txt-title-recall-en': 'Recall Orders',
 };
 let uiText = {...uiTextDefaults};
 function applyUiText(){
@@ -1036,6 +1042,17 @@ function applyUiText(){
     const el = document.getElementById(id);
     if(el) el.textContent = uiText[id];
   });
+}
+
+/* ===================== LANGUAGE MODE (Admin ▸ Settings) =====================
+   'zh' shows only the Chinese label, 'en' shows only English, 'both' shows both
+   side by side (default, matches the original bilingual design). This only
+   affects elements tagged with .i18n-zh / .i18n-en — a first batch of screens
+   (login, home, tables/recall titles, ticket action buttons). Coverage will
+   keep expanding; menu items and most admin-panel text are unaffected for now. */
+function applyUiLang(){
+  document.body.classList.remove('lang-zh','lang-en','lang-both');
+  document.body.classList.add('lang-' + (appSettings.uiLang || 'both'));
 }
 
 /* ===================== CALLER ID / CUSTOMER HISTORY =====================
@@ -1489,21 +1506,21 @@ function renderTicketSiderail(){
   const wrap = document.getElementById('ticketSiderail');
   if(ticketMode==='review'){
     wrap.innerHTML = `
-      <button class="sr-btn" onclick="switchToEditMode()"><span class="sr-icon"><i data-lucide="pencil" class="ico"></i></span><span class="sr-label">编辑</span></button>
-      <button class="sr-btn" onclick="printKitchenTicket()"><span class="sr-icon"><i data-lucide="printer" class="ico"></i></span><span class="sr-label">打印</span></button>
-      <button class="sr-btn" onclick="openPaymentScreen()"><span class="sr-icon"><i data-lucide="credit-card" class="ico"></i></span><span class="sr-label">付款</span></button>
-      <button class="sr-btn" onclick="splitBillHelper()"><span class="sr-icon"><i data-lucide="divide" class="ico"></i></span><span class="sr-label">分单</span></button>
-      <button class="sr-btn" onclick="openAdjustModal('discount', renderTicket)"><span class="sr-icon"><i data-lucide="tag" class="ico"></i></span><span class="sr-label">折扣</span></button>
-      <button class="sr-btn" onclick="openCustomerInfoModal()"><span class="sr-icon"><i data-lucide="id-card" class="ico"></i></span><span class="sr-label">客人<br>信息</span></button>
+      <button class="sr-btn" onclick="switchToEditMode()"><span class="sr-icon"><i data-lucide="pencil" class="ico"></i></span><span class="sr-label"><span class="i18n-zh">编辑</span><span class="i18n-en">Edit</span></span></button>
+      <button class="sr-btn" onclick="printKitchenTicket()"><span class="sr-icon"><i data-lucide="printer" class="ico"></i></span><span class="sr-label"><span class="i18n-zh">打印</span><span class="i18n-en">Print</span></span></button>
+      <button class="sr-btn" onclick="openPaymentScreen()"><span class="sr-icon"><i data-lucide="credit-card" class="ico"></i></span><span class="sr-label"><span class="i18n-zh">付款</span><span class="i18n-en">Pay</span></span></button>
+      <button class="sr-btn" onclick="splitBillHelper()"><span class="sr-icon"><i data-lucide="divide" class="ico"></i></span><span class="sr-label"><span class="i18n-zh">分单</span><span class="i18n-en">Split</span></span></button>
+      <button class="sr-btn" onclick="openAdjustModal('discount', renderTicket)"><span class="sr-icon"><i data-lucide="tag" class="ico"></i></span><span class="sr-label"><span class="i18n-zh">折扣</span><span class="i18n-en">Discount</span></span></button>
+      <button class="sr-btn" onclick="openCustomerInfoModal()"><span class="sr-icon"><i data-lucide="id-card" class="ico"></i></span><span class="sr-label"><span class="i18n-zh">客人信息</span><span class="i18n-en">Customer</span></span></button>
     `;
   } else {
     wrap.innerHTML = `
-      <button class="sr-btn" onclick="openCustomerInfoModal()"><span class="sr-icon"><i data-lucide="id-card" class="ico"></i></span><span class="sr-label">客人<br>信息</span></button>
-      <button class="sr-btn" onclick="openOrderTypeModal()"><span class="sr-icon"><i data-lucide="clipboard-list" class="ico"></i></span><span class="sr-label">订单<br>类型</span></button>
-      <button class="sr-btn" onclick="openChangeTableModal()"><span class="sr-icon"><i data-lucide="armchair" class="ico"></i></span><span class="sr-label">换桌</span></button>
-      <button class="sr-btn" onclick="openServerModal()"><span class="sr-icon"><i data-lucide="user-round" class="ico"></i></span><span class="sr-label">服务员</span></button>
-      <button class="sr-btn" onclick="openGuestModal()"><span class="sr-icon"><i data-lucide="users" class="ico"></i></span><span class="sr-label">人数</span></button>
-      <button class="sr-btn" onclick="openNoteModal()"><span class="sr-icon"><i data-lucide="file-text" class="ico"></i></span><span class="sr-label">备注</span></button>
+      <button class="sr-btn" onclick="openCustomerInfoModal()"><span class="sr-icon"><i data-lucide="id-card" class="ico"></i></span><span class="sr-label"><span class="i18n-zh">客人信息</span><span class="i18n-en">Customer</span></span></button>
+      <button class="sr-btn" onclick="openOrderTypeModal()"><span class="sr-icon"><i data-lucide="clipboard-list" class="ico"></i></span><span class="sr-label"><span class="i18n-zh">订单类型</span><span class="i18n-en">Order Type</span></span></button>
+      <button class="sr-btn" onclick="openChangeTableModal()"><span class="sr-icon"><i data-lucide="armchair" class="ico"></i></span><span class="sr-label"><span class="i18n-zh">换桌</span><span class="i18n-en">Table</span></span></button>
+      <button class="sr-btn" onclick="openServerModal()"><span class="sr-icon"><i data-lucide="user-round" class="ico"></i></span><span class="sr-label"><span class="i18n-zh">服务员</span><span class="i18n-en">Server</span></span></button>
+      <button class="sr-btn" onclick="openGuestModal()"><span class="sr-icon"><i data-lucide="users" class="ico"></i></span><span class="sr-label"><span class="i18n-zh">人数</span><span class="i18n-en">Guests</span></span></button>
+      <button class="sr-btn" onclick="openNoteModal()"><span class="sr-icon"><i data-lucide="file-text" class="ico"></i></span><span class="sr-label"><span class="i18n-zh">备注</span><span class="i18n-en">Note</span></span></button>
     `;
   }
 }
@@ -2348,10 +2365,18 @@ function renderAdminText(body){
       'txt-tile-recall-cn','txt-tile-recall-en',
       'txt-tile-drawer-cn','txt-tile-drawer-en',
     ]],
-    ['页面标题 Screen Titles', ['txt-title-tables','txt-title-recall']],
+    ['页面标题 Screen Titles', ['txt-title-tables-zh','txt-title-tables-en','txt-title-recall-zh','txt-title-recall-en']],
   ];
+  const langLabels = [['both','中英双语 Both'],['zh','仅中文 Chinese Only'],['en','仅英文 English Only']];
   let html = `<h2>文案管理 Text Management</h2>
-    <p style="color:var(--slate); font-size:12.5px; margin-bottom:16px;">这里能改的是目前系统里已经接好的一批常用文字，改完立即生效并保存。之后可以继续往这里加更多可编辑的字段。</p>`;
+    <div class="admin-section">
+      <h3>界面语言 Language Mode</h3>
+      <p style="color:var(--slate); font-size:12.5px; margin-bottom:10px;">目前覆盖登录页、首页按钮、桌位/调出订单标题、点餐页底部与右侧按钮这几处，其余文字(菜单、后台内部)还是固定显示，之后会逐步扩大范围。</p>
+      <div class="admin-add-form">
+        ${langLabels.map(([k,l])=>`<span class="rf-chip ${appSettings.uiLang===k?'active':''}" style="cursor:pointer;" onclick="setUiLang('${k}')">${l}</span>`).join('')}
+      </div>
+    </div>
+    <p style="color:var(--slate); font-size:12.5px; margin-bottom:16px;">下面是已经接好的一批常用文字，改完立即生效并保存。之后可以继续往这里加更多可编辑的字段。</p>`;
   groups.forEach(([title, ids])=>{
     html += `<div class="admin-section"><h3>${title}</h3><table class="admin-table"><tbody>`;
     ids.forEach(id=>{
@@ -2364,6 +2389,13 @@ function renderAdminText(body){
     <button class="admin-btn" onclick="resetUiText()">恢复默认文字 Reset to Defaults</button>
   </div>`;
   body.innerHTML = html;
+}
+function setUiLang(mode){
+  appSettings.uiLang = mode;
+  applyUiLang();
+  db.from('settings').upsert({key:'app', value: appSettings})
+    .then(({error})=>{ if(error) console.error('setUiLang error', error); });
+  renderAdminText(document.getElementById('adminBody'));
 }
 function updateUiText(id, val){
   uiText[id] = val;
@@ -2767,8 +2799,7 @@ async function bootstrapApp(){
       if(row.key==='ui_text') uiText = {...uiTextDefaults, ...row.value};
     });
     applyUiText();
-
-    // Customer history (for caller ID recognition)
+    applyUiLang();
     await loadCustomersFromDB();
 
     pinLabel.textContent = '请输入密码 Enter your PIN';
