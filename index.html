@@ -783,6 +783,30 @@
   <div class="login-hint">每家餐厅一个账号，用来在这台设备上"开通"这家店。开通后员工日常还是用 PIN 码点餐，不用每次输邮箱密码。</div>
 </div>
 
+<!-- ============ WELCOME / ONBOARDING (shown once right after registration) ============ -->
+<div class="screen" id="screen-welcome">
+  <div class="form-wrap" style="width:460px; text-align:center;">
+    <h2 style="margin-bottom:6px;">🎉 欢迎, <span id="welcomeRestaurantName"></span>！</h2>
+    <p style="color:var(--slate); font-size:13.5px; margin-bottom:20px;">Welcome! Your restaurant account is ready.</p>
+    <div style="background:var(--paper); border-radius:12px; padding:16px; margin-bottom:20px; text-align:left;">
+      <div style="font-weight:700; font-size:13.5px; margin-bottom:8px;">初始管理员密码 Default Manager PIN</div>
+      <div style="font-family:'IBM Plex Mono',monospace; font-size:26px; font-weight:700; color:var(--amber-dark);">9999</div>
+      <div style="font-size:11.5px; color:var(--ember); margin-top:6px;">⚠️ 请尽快在"员工账号"里改成自己的密码</div>
+    </div>
+    <div style="text-align:left; margin-bottom:20px;">
+      <div style="font-weight:700; font-size:13.5px; margin-bottom:10px;">开店前建议先完成 Before you open:</div>
+      <div style="font-size:13px; color:var(--slate); line-height:2;">
+        ☐ 添加菜单分类和菜品 Set up your menu<br>
+        ☐ 添加桌位(如果有堂食) Set up tables (if dine-in)<br>
+        ☐ 添加员工账号 Add staff accounts<br>
+        ☐ 打印机/收款设置 Printer & payment settings
+      </div>
+    </div>
+    <button class="form-submit" onclick="goToAdminFromWelcome()" style="margin-bottom:10px;">立即设置 Set Up Now →</button>
+    <button class="btn btn-print" onclick="showScreen('screen-login')" style="width:100%;">稍后设置，先看看 Skip for Now</button>
+  </div>
+</div>
+
 <div class="screen" id="screen-login">
   <div class="login-brand">
     <div class="mark" id="txt-brand-mark">铺</div>
@@ -951,6 +975,7 @@
   <div class="admin-nav">
     <div class="an-title"><i data-lucide="settings" class="ico"></i> 管理后台</div>
     <button class="admin-tab" data-tab="menu" onclick="switchAdminTab('menu')"><i data-lucide="soup" class="ico"></i> <span class="i18n-zh">菜单管理</span> <span class="i18n-en">Menu</span></button>
+    <button class="admin-tab" data-tab="tables" onclick="switchAdminTab('tables')"><i data-lucide="armchair" class="ico"></i> <span class="i18n-zh">桌位管理</span> <span class="i18n-en">Tables</span></button>
     <button class="admin-tab" data-tab="reports" onclick="switchAdminTab('reports')"><i data-lucide="bar-chart-3" class="ico"></i> <span class="i18n-zh">销售报表</span> <span class="i18n-en">Reports</span></button>
     <button class="admin-tab" data-tab="staff" onclick="switchAdminTab('staff')"><i data-lucide="user" class="ico"></i> <span class="i18n-zh">员工账号</span> <span class="i18n-en">Staff</span></button>
     <button class="admin-tab" data-tab="history" onclick="switchAdminTab('history')"><i data-lucide="receipt" class="ico"></i> <span class="i18n-zh">历史订单</span> <span class="i18n-en">Orders</span></button>
@@ -1056,6 +1081,8 @@ async function submitAuth(){
   if(!email || !password){ errEl.textContent = '请填写邮箱和密码 Please fill in email and password'; return; }
 
   loadingEl.style.display = 'block';
+  let justRegistered = false;
+  let registeredRestaurantName = '';
   try{
     if(authTab === 'register'){
       const restaurantName = document.getElementById('authRestaurantName').value.trim();
@@ -1072,6 +1099,8 @@ async function submitAuth(){
         .select().single();
       if(restErr){ errEl.textContent = '餐厅创建失败 Failed to create restaurant: '+restErr.message; loadingEl.style.display='none'; return; }
       currentRestaurantId = restRow.id;
+      justRegistered = true;
+      registeredRestaurantName = restaurantName;
 
       // Seed a starter manager account so the owner can actually get into a brand-new,
       // otherwise-empty restaurant. They should change this PIN right away in 员工账号.
@@ -1086,8 +1115,14 @@ async function submitAuth(){
       if(restErr || !restRow){ errEl.textContent = '没有找到关联的餐厅，请联系支持 No restaurant found for this account'; loadingEl.style.display='none'; return; }
       currentRestaurantId = restRow.id;
     }
-    showScreen('screen-login');
-    bootstrapApp();
+    if(justRegistered){
+      document.getElementById('welcomeRestaurantName').textContent = registeredRestaurantName;
+      showScreen('screen-welcome');
+      await bootstrapApp();
+    } else {
+      showScreen('screen-login');
+      await bootstrapApp();
+    }
   } catch(err){
     errEl.textContent = '出错了 Error: ' + err.message;
   } finally {
@@ -1110,6 +1145,13 @@ async function checkExistingSession(){
   if(error || !restRow) return false;
   currentRestaurantId = restRow.id;
   return true;
+}
+function goToAdminFromWelcome(){
+  staffName = 'Boss';
+  currentRole = 'manager';
+  document.getElementById('staffName').textContent = 'Boss';
+  showScreen('screen-admin');
+  switchAdminTab('tables');
 }
 
 /* ===================== MENU DATA (loaded from Supabase) ===================== */
@@ -2490,11 +2532,82 @@ function switchAdminTab(tab){
   document.querySelectorAll('.admin-tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
   const body = document.getElementById('adminBody');
   if(tab==='menu') renderAdminMenu(body);
+  else if(tab==='tables') renderAdminTables(body);
   else if(tab==='reports') renderAdminReports(body);
   else if(tab==='staff') renderAdminStaff(body);
   else if(tab==='history') renderAdminHistory(body);
   else if(tab==='text') renderAdminText(body);
   else if(tab==='settings') renderAdminSettings(body);
+}
+
+/* ===================== ADMIN: TABLES MANAGEMENT ===================== */
+function renderAdminTables(body){
+  let html = `<h2><span class="i18n-zh">桌位管理</span> <span class="i18n-en">Table Management</span></h2>
+    <p style="color:var(--slate); font-size:12.5px; margin-bottom:16px;">按分区(比如 A区/B区/吧台)管理桌位，添加/删除桌子会立刻影响点餐页的桌位选择界面。</p>`;
+  Object.keys(TABLE_SECTIONS).forEach(section=>{
+    html += `<div class="admin-section"><h3>${section}</h3><table class="admin-table"><thead><tr>
+      <th>桌号 Label</th><th style="width:140px;">样式 Shape</th><th style="width:50px;"></th>
+    </tr></thead><tbody>`;
+    TABLE_SECTIONS[section].forEach((t,idx)=>{
+      html += `<tr>
+        <td><input type="text" value="${t.label}" onchange="updateTable('${t.id}',{label:this.value})"></td>
+        <td><select onchange="updateTable('${t.id}',{shape:this.value})">
+          <option value="square" ${t.shape==='square'?'selected':''}>方桌 Square</option>
+          <option value="booth" ${t.shape==='booth'?'selected':''}>卡座 Booth</option>
+        </select></td>
+        <td><button class="row-del" onclick="deleteTable('${t.id}','${section}')">✕</button></td>
+      </tr>`;
+    });
+    html += `</tbody></table>
+      <div class="admin-add-form">
+        <input type="text" id="newTableLabel-${section}" placeholder="新桌号 e.g. A8">
+        <select id="newTableShape-${section}"><option value="square">方桌 Square</option><option value="booth">卡座 Booth</option></select>
+        <button class="admin-btn" onclick="addTable('${section}')">＋ 添加桌位</button>
+      </div>
+    </div>`;
+  });
+  html += `<div class="admin-section"><h3><span class="i18n-zh">新增分区</span> <span class="i18n-en">Add Section</span></h3>
+    <div class="admin-add-form">
+      <input type="text" id="newSectionName" placeholder="分区名 e.g. 二楼 Upstairs">
+      <button class="admin-btn" onclick="addTableSection()">＋ 添加分区</button>
+    </div></div>`;
+  body.innerHTML = html;
+}
+async function addTable(section){
+  const labelInput = document.getElementById(`newTableLabel-${section}`);
+  const shapeInput = document.getElementById(`newTableShape-${section}`);
+  const label = labelInput.value.trim();
+  const shape = shapeInput.value;
+  if(!label){ alert('请填写桌号 Please enter a table label'); return; }
+  const {data, error} = await db.from('restaurant_tables')
+    .insert({restaurant_id: currentRestaurantId, section, label, shape, sort_order: TABLE_SECTIONS[section].length+1})
+    .select().single();
+  if(error){ alert('保存失败 Failed to save: '+error.message); return; }
+  TABLE_SECTIONS[section].push({id:data.id, label:data.label, shape:data.shape});
+  renderAdminTables(document.getElementById('adminBody'));
+}
+async function updateTable(tableId, patch){
+  const {error} = await db.from('restaurant_tables').update(patch).eq('id', tableId);
+  if(error){ console.error('updateTable error', error); return; }
+  Object.keys(TABLE_SECTIONS).forEach(section=>{
+    const t = TABLE_SECTIONS[section].find(x=>x.id===tableId);
+    if(t) Object.assign(t, patch);
+  });
+}
+async function deleteTable(tableId, section){
+  if(!confirm('确定删除这个桌位吗？Delete this table?')) return;
+  const {error} = await db.from('restaurant_tables').delete().eq('id', tableId);
+  if(error){ alert('删除失败 Failed to delete: '+error.message); return; }
+  TABLE_SECTIONS[section] = TABLE_SECTIONS[section].filter(t=>t.id!==tableId);
+  renderAdminTables(document.getElementById('adminBody'));
+}
+async function addTableSection(){
+  const input = document.getElementById('newSectionName');
+  const name = input.value.trim();
+  if(!name){ return; }
+  if(TABLE_SECTIONS[name]){ alert('该分区已存在 Section already exists'); return; }
+  TABLE_SECTIONS[name] = [];
+  renderAdminTables(document.getElementById('adminBody'));
 }
 
 /* ===================== ADMIN: TEXT / LABELS MANAGEMENT ===================== */
