@@ -20,6 +20,7 @@
     --white:#FFFDF8;
   }
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  button, [onclick]{touch-action:manipulation;}
   html,body{height:100%;}
   body{
     font-family:'Inter',sans-serif;
@@ -360,6 +361,11 @@
   .recall-card .rc-sub{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--slate); margin-top:4px;}
   .recall-card .rc-total{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--amber-dark); font-size:15px; margin-top:auto;}
   .recall-empty{color:var(--slate); text-align:center; margin-top:60px; font-size:14px; grid-column:1/-1;}
+  .recall-sort-bar{
+    flex-shrink:0; display:flex; flex-wrap:wrap; gap:6px; padding:10px 24px;
+    border-top:1.5px solid var(--slate-line); background:var(--white);
+  }
+  .recall-sort-bar .rf-chip{font-size:11px; padding:5px 10px;}
 
   /* ================= ORDER SCREEN ================= */
   #screen-order{
@@ -520,9 +526,9 @@
   .status-paid{background:#E3EBE3; color:var(--herb);}
 
   /* ================= MODAL ================= */
-  .modal-overlay{position:fixed; inset:0; background:rgba(35,32,27,.55); display:none; align-items:flex-start; justify-content:center; z-index:50; overflow-y:auto; padding:5vh 0;}
+  .modal-overlay{position:fixed; inset:0; background:rgba(35,32,27,.55); display:none; align-items:center; justify-content:center; z-index:50;}
   .modal-overlay.show{display:flex;}
-  .modal{background:var(--white); border-radius:16px; padding:28px 26px; width:320px; max-width:90vw; text-align:center; max-height:88vh; overflow-y:auto;}
+  .modal{background:var(--white); border-radius:16px; padding:28px 26px; width:320px; max-width:90vw; text-align:center; max-height:85vh; overflow-y:auto; -webkit-overflow-scrolling:touch;}
   .modal h3{font-family:'Fraunces',serif; font-size:20px; margin-bottom:8px;}
   .modal p{font-size:13.5px; color:var(--slate); margin-bottom:20px; line-height:1.5;}
   .modal .spinner{width:34px; height:34px; margin:0 auto 16px; border:3px solid var(--slate-line); border-top-color:var(--herb); border-radius:50%; animation:spin .8s linear infinite;}
@@ -828,6 +834,7 @@
     <div class="recall-main">
       <div class="recall-date-row" id="recallDateRow"></div>
       <div class="recall-grid" id="recallList"></div>
+      <div class="recall-sort-bar" id="recallSortBar"></div>
     </div>
     <div class="recall-sidebar" id="recallSidebar"></div>
   </div>
@@ -947,6 +954,32 @@
       <button onclick="openAdjustModal('surcharge')">加收 Surcharge</button>
       <button onclick="openAdjustModal('discount')">折扣 Discount</button>
       <button onclick="openAdjustModal('tip')">小费 Tip</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ RECEIPT VIEW (from Recall search) ============ -->
+<div class="pay-overlay" id="receiptViewOverlay">
+  <div class="pay-screen" style="max-width:680px;">
+    <div class="pay-top">
+      <span class="pay-top-label" id="rvLabel">订单</span>
+      <button class="pay-close" onclick="closeReceiptView()">✕</button>
+    </div>
+    <div style="flex:1; display:flex; overflow:hidden;">
+      <div style="flex:1; overflow-y:auto; padding:16px 20px;" id="rvItems"></div>
+      <div class="ticket-siderail" style="width:80px;">
+        <button class="sr-btn" onclick="rvEdit()"><span class="sr-icon">✏️</span><span class="sr-label">编辑</span></button>
+        <button class="sr-btn" onclick="rvPrint()"><span class="sr-icon">🖨️</span><span class="sr-label">打印</span></button>
+        <button class="sr-btn" onclick="rvPay()"><span class="sr-icon">💳</span><span class="sr-label">付款</span></button>
+        <button class="sr-btn" onclick="rvSplit()"><span class="sr-icon">➗</span><span class="sr-label">分单</span></button>
+        <button class="sr-btn" onclick="rvDiscount()"><span class="sr-icon">🏷️</span><span class="sr-label">折扣</span></button>
+        <button class="sr-btn" onclick="rvCustomerInfo()"><span class="sr-icon">🪪</span><span class="sr-label">客人<br>信息</span></button>
+      </div>
+    </div>
+    <div class="ticket-totals" style="border-top:1.5px solid var(--slate-line); background:var(--white);">
+      <div class="totals-row"><span>金额 Subtotal</span><span id="rvSubtotal">$0.00</span></div>
+      <div class="totals-row"><span>税 Tax</span><span id="rvTax">$0.00</span></div>
+      <div class="totals-row grand"><span>合计 Total</span><span id="rvTotal">$0.00</span></div>
     </div>
   </div>
 </div>
@@ -1281,11 +1314,13 @@ function startOrderFromForm(){
 }
 
 /* ===================== RECALL / ORDER LOOKUP ===================== */
-let recallFilters = { range:'today', status:'unpaid', type:'all', search:'' };
+let recallFilters = { range:'today', status:'unpaid', type:'all', search:'', payment:'all' };
+let recallSort = { field:'created_at', dir:'desc' };
 function goRecall(){
   showScreen('screen-recall');
   renderRecallDateRow();
   renderRecallSidebar();
+  renderRecallSortBar();
   runRecallSearch();
 }
 function renderRecallDateRow(){
@@ -1297,6 +1332,7 @@ function renderRecallSidebar(){
   const wrap = document.getElementById('recallSidebar');
   const statuses = [['unpaid','未结 Unpaid'],['paid','已结 Paid'],['open','待处理 Open'],['fired','厨房中 Fired'],['held','已暂存 Held'],['all','全部 All']];
   const types = [['all','全部 All'],['dine-in','堂食 Dine In'],['to-go','外带 To Go'],['pickup','自取 Pick Up'],['delivery','外送 Delivery']];
+  const payments = [['all','全部 All'],['cash','现金 Cash'],['card','信用卡 Credit Card']];
   wrap.innerHTML = `
     <div>
       <input type="text" class="rf-search" id="rfSearch" placeholder="搜索电话/姓名/桌号..." value="${recallFilters.search}" oninput="setRecallFilter('search', this.value)">
@@ -1313,6 +1349,12 @@ function renderRecallSidebar(){
         ${types.map(([k,l])=>`<button class="rf-chip ${recallFilters.type===k?'active':''}" onclick="setRecallFilter('type','${k}')">${l}</button>`).join('')}
       </div>
     </div>
+    <div>
+      <div class="rf-side-title">付款方式 Payment</div>
+      <div class="rf-side-chips">
+        ${payments.map(([k,l])=>`<button class="rf-chip ${recallFilters.payment===k?'active':''}" onclick="setRecallFilter('payment','${k}')">${l}</button>`).join('')}
+      </div>
+    </div>
   `;
 }
 function setRecallFilter(key, val){
@@ -1324,11 +1366,30 @@ function setRecallFilter(key, val){
   if(el) el.setSelectionRange(el.value.length, el.value.length);
   runRecallSearch();
 }
+function setRecallSort(field){
+  if(recallSort.field===field) recallSort.dir = recallSort.dir==='asc' ? 'desc' : 'asc';
+  else { recallSort.field = field; recallSort.dir = 'asc'; }
+  renderRecallSortBar();
+  runRecallSearch();
+}
+function renderRecallSortBar(){
+  const wrap = document.getElementById('recallSortBar');
+  const fields = [
+    ['created_at','时间'],['total','价格'],['guest_count','人数'],['server_name','服务员'],
+    ['status','状态'],['type','类型'],['order_number','单号'],['customer_phone','电话'],
+    ['customer_name','姓名'],['payment_method','付款类型'],['driver_name','司机']
+  ];
+  wrap.innerHTML = fields.map(([k,l])=>{
+    const active = recallSort.field===k;
+    const arrow = active ? (recallSort.dir==='asc' ? ' ▲' : ' ▼') : '';
+    return `<button class="rf-chip ${active?'active':''}" onclick="setRecallSort('${k}')">${l}${arrow}</button>`;
+  }).join('');
+}
 async function runRecallSearch(){
   const list = document.getElementById('recallList');
   list.innerHTML = `<p style="color:var(--slate); font-size:13.5px; text-align:center; margin-top:30px; grid-column:1/-1;">加载中... Loading...</p>`;
 
-  let query = db.from('orders').select('*, order_items(*)').order('created_at', {ascending:false}).limit(100);
+  let query = db.from('orders').select('*, order_items(*)').limit(200);
 
   if(recallFilters.range==='today'){
     const start = new Date(); start.setHours(0,0,0,0);
@@ -1349,6 +1410,7 @@ async function runRecallSearch(){
   else if(recallFilters.status!=='all') query = query.eq('status', recallFilters.status);
 
   if(recallFilters.type!=='all') query = query.eq('type', recallFilters.type);
+  if(recallFilters.payment!=='all') query = query.eq('payment_method', recallFilters.payment);
 
   const {data: orders, error} = await query;
   if(error){
@@ -1366,6 +1428,17 @@ async function runRecallSearch(){
       String(o.order_number).includes(s)
     );
   }
+
+  const {field, dir} = recallSort;
+  filtered = [...filtered].sort((a,b)=>{
+    let va = a[field], vb = b[field];
+    if(field==='total') { va = parseFloat(va||0); vb = parseFloat(vb||0); }
+    if(va==null) va = '';
+    if(vb==null) vb = '';
+    if(va<vb) return dir==='asc' ? -1 : 1;
+    if(va>vb) return dir==='asc' ? 1 : -1;
+    return 0;
+  });
 
   if(filtered.length===0){
     list.innerHTML = `<div class="recall-empty">没有找到符合条件的订单<br>No matching orders</div>`;
@@ -1387,25 +1460,86 @@ async function runRecallSearch(){
       <div class="rc-total">$${parseFloat(o.total||0).toFixed(2)}</div>
     `;
     if(o.status!=='paid' && o.status!=='cancelled'){
-      card.onclick = ()=> resumeOrderFromDB(o.id);
+      card.onclick = ()=> openReceiptView(o.id);
     } else {
       card.style.cursor = 'default';
     }
     list.appendChild(card);
   });
 }
-async function resumeOrderFromDB(dbOrderId){
+async function loadOrderState(dbOrderId){
   const {data: o, error} = await db.from('orders').select('*, order_items(*)').eq('id', dbOrderId).single();
-  if(error){ alert('读取订单失败 Failed to load order: '+error.message); return; }
+  if(error){ alert('读取订单失败 Failed to load order: '+error.message); return null; }
   orderMeta = {
     type: o.type, orderNo: o.order_number,
     table: o.table_label, name: o.customer_name, phone: o.customer_phone, address: o.customer_address,
-    serverName: o.server_name || o.staff_name, guestCount: o.guest_count, note: o.order_note || ''
+    serverName: o.server_name || o.staff_name, guestCount: o.guest_count, note: o.order_note || '',
+    driverName: o.driver_name || ''
   };
   order = o.order_items.map(it=>({id: idSeq++, name:it.name, price:parseFloat(it.price), qty:it.qty, note:it.note||'', modifier:''}));
   orderStatus = o.status==='paid' ? 'paid' : (o.status==='fired' ? 'fired' : 'open');
   currentOrderNo = o.id;
+  payAdjustments = {discount:0, surcharge:0, tip:0};
+  return o;
+}
+async function resumeOrderFromDB(dbOrderId){
+  const o = await loadOrderState(dbOrderId);
+  if(!o) return;
   enterOrderScreen();
+}
+
+/* ===================== RECEIPT VIEW (from Recall search) ===================== */
+let rvOrderId = null;
+async function openReceiptView(dbOrderId){
+  rvOrderId = dbOrderId;
+  const o = await loadOrderState(dbOrderId);
+  if(!o) return;
+  renderReceiptView();
+  document.getElementById('receiptViewOverlay').classList.add('show');
+}
+function renderReceiptView(){
+  const label = orderMeta.type==='dine-in' ? `桌 ${orderMeta.table} · #${orderMeta.orderNo}` : `${orderMeta.name||'Guest'} · #${orderMeta.orderNo}`;
+  document.getElementById('rvLabel').textContent = label;
+  const itemsWrap = document.getElementById('rvItems');
+  itemsWrap.innerHTML = order.map(it=>{
+    const extras = it.note ? `<div style="font-size:11.5px; color:var(--ember); font-style:italic; margin-top:2px;">📝 ${it.note}</div>` : '';
+    return `<div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #EFEAE0;">
+      <div><div style="font-weight:700; font-size:14px;">${it.qty} × ${it.name}</div>${extras}</div>
+      <div style="font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--slate);">$${(it.price*it.qty).toFixed(2)}</div>
+    </div>`;
+  }).join('') || `<p style="color:var(--slate); text-align:center; margin-top:20px;">没有菜品 No items</p>`;
+  const {subtotal, tax, total} = calcTotal(order);
+  const adjTotal = total - payAdjustments.discount + payAdjustments.surcharge + payAdjustments.tip;
+  document.getElementById('rvSubtotal').textContent = `$${subtotal.toFixed(2)}`;
+  document.getElementById('rvTax').textContent = `$${tax.toFixed(2)}`;
+  document.getElementById('rvTotal').textContent = `$${adjTotal.toFixed(2)}`;
+}
+function closeReceiptView(){
+  document.getElementById('receiptViewOverlay').classList.remove('show');
+}
+function rvEdit(){
+  closeReceiptView();
+  enterOrderScreen();
+}
+function rvPrint(){
+  printKitchenTicket();
+}
+function rvPay(){
+  closeReceiptView();
+  openPaymentScreen();
+}
+function rvSplit(){
+  const total = amountDue();
+  const ways = parseInt(prompt('分成几份？Split into how many ways?', '2'));
+  if(!ways || ways<2) return;
+  const portion = total/ways;
+  alert(`总额 $${total.toFixed(2)} 分成 ${ways} 份，每份约 $${portion.toFixed(2)}。\n请分别用"付款"按钮为每一份单独收款(现金/刷卡都可以分开操作)。\nThis is a reference split — process each portion separately via Pay.`);
+}
+function rvDiscount(){
+  openAdjustModal('discount', renderReceiptView);
+}
+function rvCustomerInfo(){
+  openCustomerInfoModal(renderReceiptView);
 }
 
 /* ===================== ORDER FLOW ===================== */
@@ -1417,6 +1551,7 @@ async function startNewOrder(meta){
   orderStatus = 'open';
   currentOrderNo = dbOrder.id;
   idSeq = 0;
+  payAdjustments = {discount:0, surcharge:0, tip:0};
   enterOrderScreen();
 }
 function enterOrderScreen(){
@@ -1763,7 +1898,9 @@ document.getElementById('newBtn').onclick = ()=>{
 };
 
 /* ===================== TICKET SIDE RAIL (Customer Info / Order Type / Change Table / Server / Guest / Note) ===================== */
-function openCustomerInfoModal(){
+let _ciCallback = null;
+function openCustomerInfoModal(onSave){
+  _ciCallback = onSave || null;
   const overlay = document.getElementById('modalOverlay');
   const content = document.getElementById('modalContent');
   overlay.classList.add('show');
@@ -1775,7 +1912,7 @@ function openCustomerInfoModal(){
         <input type="text" id="ciName" value="${orderMeta.name||''}" placeholder="e.g. Smith party" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
       <div class="field" style="margin-top:10px;"><label style="display:block; font-size:12px; color:var(--slate); margin-bottom:6px;">电话(可选) Phone (optional)</label>
         <input type="tel" id="ciPhone" value="${orderMeta.phone && orderMeta.phone!=='--' ? orderMeta.phone : ''}" placeholder="e.g. (555) 123-4567" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
-      <button class="modal-close" onclick="saveCustomerInfo()">保存 Save</button>
+      <button type="button" class="modal-close" onclick="saveCustomerInfo()">保存 Save</button>
     `;
   } else {
     content.innerHTML = `
@@ -1786,8 +1923,10 @@ function openCustomerInfoModal(){
       <div class="field" style="margin-top:10px;"><label style="display:block; font-size:12px; color:var(--slate); margin-bottom:6px;">电话 Phone</label>
         <input type="tel" id="ciPhone" value="${orderMeta.phone && orderMeta.phone!=='--' ? orderMeta.phone : ''}" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
       ${orderMeta.type==='delivery' ? `<div class="field" style="margin-top:10px;"><label style="display:block; font-size:12px; color:var(--slate); margin-bottom:6px;">送餐地址 Address</label>
-        <input type="text" id="ciAddress" value="${orderMeta.address||''}" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>` : ''}
-      <button class="modal-close" onclick="saveCustomerInfo()">保存 Save</button>
+        <input type="text" id="ciAddress" value="${orderMeta.address||''}" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>
+        <div class="field" style="margin-top:10px;"><label style="display:block; font-size:12px; color:var(--slate); margin-bottom:6px;">司机(可选) Driver (optional)</label>
+        <input type="text" id="ciDriver" value="${orderMeta.driverName||''}" placeholder="e.g. Mike" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px;"></div>` : ''}
+      <button type="button" class="modal-close" onclick="saveCustomerInfo()">保存 Save</button>
     `;
   }
 }
@@ -1795,12 +1934,18 @@ async function saveCustomerInfo(){
   const name = document.getElementById('ciName').value.trim();
   const phone = document.getElementById('ciPhone').value.trim();
   const addressEl = document.getElementById('ciAddress');
+  const driverEl = document.getElementById('ciDriver');
   const address = addressEl ? addressEl.value.trim() : orderMeta.address;
+  const driver = driverEl ? driverEl.value.trim() : orderMeta.driverName;
   orderMeta.name = name || orderMeta.name;
   orderMeta.phone = phone || orderMeta.phone;
   orderMeta.address = address;
-  await updateOrderInDB(currentOrderNo, {customer_name: orderMeta.name||null, customer_phone: orderMeta.phone||null, customer_address: orderMeta.address||null});
-  renderTicket();
+  orderMeta.driverName = driver;
+  await updateOrderInDB(currentOrderNo, {
+    customer_name: orderMeta.name||null, customer_phone: orderMeta.phone||null,
+    customer_address: orderMeta.address||null, driver_name: orderMeta.driverName||null
+  });
+  if(_ciCallback) _ciCallback(); else renderTicket();
   closeModal();
 }
 
@@ -2000,7 +2145,6 @@ function amountDue(){
 }
 
 function openPaymentScreen(){
-  payAdjustments = {discount:0, surcharge:0, tip:0};
   payCashCents = 0;
   renderPayDue();
   renderPayCashGrid();
@@ -2054,7 +2198,9 @@ function applyVipDiscount(){
   alert('已应用 VIP 9折优惠(演示用途，实际折扣规则可在后台调整)\nVIP 10% discount applied (demo — configurable later)');
 }
 
-function openAdjustModal(kind){
+let _adjCallback = null;
+function openAdjustModal(kind, onSave){
+  _adjCallback = onSave || null;
   const labels = {discount:'折扣 Discount', surcharge:'加收 Surcharge', tip:'小费 Tip'};
   const overlay = document.getElementById('modalOverlay');
   const content = document.getElementById('modalContent');
@@ -2063,15 +2209,18 @@ function openAdjustModal(kind){
     <h3>${labels[kind]}</h3>
     <p>输入金额(美元)Enter a dollar amount</p>
     <div class="field"><input type="number" step="0.01" min="0" id="adjInput" value="${payAdjustments[kind]||''}" placeholder="e.g. 2.00" style="width:100%; padding:12px; border:1.5px solid var(--slate-line); border-radius:10px; font-size:15px; text-align:center;"></div>
-    <button class="modal-close" onclick="saveAdjust('${kind}')">保存 Save</button>
+    <button type="button" class="modal-close" onclick="saveAdjust('${kind}')">保存 Save</button>
   `;
   setTimeout(()=>document.getElementById('adjInput')?.focus(), 100);
 }
 function saveAdjust(kind){
   const val = parseFloat(document.getElementById('adjInput').value) || 0;
   payAdjustments[kind] = val;
-  renderPayDue();
-  renderPayCashGrid();
+  if(_adjCallback) _adjCallback();
+  if(document.getElementById('payOverlay').classList.contains('show')){
+    renderPayDue();
+    renderPayCashGrid();
+  }
   closeModal();
 }
 
