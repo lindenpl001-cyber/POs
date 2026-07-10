@@ -965,7 +965,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.462.0/dist/umd/lucide.min.js"></script>
 <script>
 /* ===================== SUPABASE ===================== */
 const SUPABASE_URL = "https://kqeraivpbujrbrqoxkwr.supabase.co";
@@ -2787,7 +2787,12 @@ bootstrapApp();
    content rendered dynamically after every re-render. */
 if(window.lucide){
   lucide.createIcons();
-  const iconObserver = new MutationObserver(()=>{ lucide.createIcons(); });
+  let iconRefreshPending = false;
+  const iconObserver = new MutationObserver(()=>{
+    if(iconRefreshPending) return;
+    iconRefreshPending = true;
+    requestAnimationFrame(()=>{ lucide.createIcons(); iconRefreshPending = false; });
+  });
   iconObserver.observe(document.body, {childList:true, subtree:true});
 }
 
