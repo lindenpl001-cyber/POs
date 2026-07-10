@@ -18,6 +18,23 @@
     --slate:#8E8E93;
     --slate-line:#D1D1D6;
     --white:#FFFFFF;
+    /* "Chrome" surfaces = the dark panels (rail, ticket siderail, login, admin nav).
+       Two selectable themes: black (default) or orange. Text on these surfaces
+       must always be bright/clear — never dim gray. */
+    --chrome-bg:#1C1C1E;
+    --chrome-bg-2:#2C2C2E;
+    --chrome-text:#FFFFFF;
+    --chrome-text-dim:#E3E3E6;
+    --chrome-accent:#FF6A00;
+    --chrome-accent-text:#1C1C1E;
+  }
+  body.theme-orange{
+    --chrome-bg:#FF6A00;
+    --chrome-bg-2:#E85D00;
+    --chrome-text:#1C1C1E;
+    --chrome-text-dim:#3A2200;
+    --chrome-accent:#1C1C1E;
+    --chrome-accent-text:#FFFFFF;
   }
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
   button, [onclick]{touch-action:manipulation;}
@@ -36,7 +53,7 @@
 
   /* ================= LOGIN ================= */
   #screen-login{
-    background:var(--ink);
+    background:var(--chrome-bg);
     align-items:center;
     justify-content:center;
     flex-direction:column;
@@ -44,31 +61,31 @@
   }
   .login-brand{
     text-align:center;
-    color:var(--paper);
+    color:var(--chrome-text);
   }
   .login-brand .mark{
     font-family:'Inter',sans-serif;
     font-weight:900;
     font-size:44px;
-    color:var(--amber);
+    color:var(--chrome-accent);
     letter-spacing:-1px;
   }
   .login-brand .sub{
     font-family:'IBM Plex Mono',monospace;
     font-size:12px;
     letter-spacing:2px;
-    color:var(--slate);
+    color:var(--chrome-text-dim);
     margin-top:4px;
     text-transform:uppercase;
   }
   .pin-panel{
-    background:#2C2C2E;
+    background:var(--chrome-bg-2);
     border-radius:20px;
     padding:32px 34px;
     width:320px;
   }
   .pin-label{
-    color:var(--paper);
+    color:var(--chrome-text);
     font-size:14px;
     font-weight:600;
     margin-bottom:12px;
@@ -83,10 +100,10 @@
   .pin-dot{
     width:16px;height:16px;
     border-radius:50%;
-    border:2px solid var(--slate);
+    border:2px solid var(--chrome-text-dim);
     transition:background .1s, border-color .1s;
   }
-  .pin-dot.filled{background:var(--amber); border-color:var(--amber);}
+  .pin-dot.filled{background:var(--chrome-accent); border-color:var(--chrome-accent);}
   .pin-dot.err{background:var(--ember); border-color:var(--ember);}
   .pin-grid{
     display:grid;
@@ -97,17 +114,17 @@
     aspect-ratio:1;
     border-radius:50%;
     border:none;
-    background:#2C2C2E;
-    color:var(--paper);
+    background:var(--chrome-bg-2);
+    color:var(--chrome-text);
     font-family:'IBM Plex Mono',monospace;
     font-size:22px;
     font-weight:600;
     cursor:pointer;
   }
-  .pin-key:active{background:var(--amber); color:var(--ink);}
+  .pin-key:active{background:var(--chrome-accent); color:var(--chrome-accent-text);}
   .pin-key.wide{border-radius:16px; font-size:14px; font-weight:700;}
   .login-hint{
-    color:var(--slate);
+    color:var(--chrome-text-dim);
     font-size:12px;
     font-family:'IBM Plex Mono',monospace;
     text-align:center;
@@ -192,36 +209,45 @@
     background:var(--ink); color:var(--paper); border:none; border-radius:7px;
     padding:6px 10px; font-size:11.5px; font-weight:700; cursor:pointer; white-space:nowrap;
   }
+  .home-body{
+    flex:1; display:flex; flex-direction:row; padding:24px 40px; gap:28px; overflow:hidden;
+  }
+  .caller-id-panel{
+    flex:1.1; background:var(--white); border:1.5px dashed var(--slate-line); border-radius:20px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+    color:var(--slate);
+  }
+  .caller-id-placeholder-icon{width:44px !important; height:44px !important; opacity:.35;}
+  .caller-id-placeholder-text{font-size:15px; font-weight:600; text-align:center; line-height:1.5; opacity:.6;}
   .home-grid{
-    flex:1;
+    flex:1.3;
     display:grid;
     grid-template-columns:repeat(2, 1fr);
     grid-template-rows:repeat(3, 1fr);
-    gap:20px;
-    padding:32px 80px;
+    gap:16px;
   }
   .home-tile{
     background:var(--white);
     border:1.5px solid var(--slate-line);
-    border-radius:20px;
+    border-radius:18px;
     display:flex;
     flex-direction:column;
     align-items:center;
     justify-content:center;
-    gap:14px;
+    gap:10px;
     cursor:pointer;
     transition:transform .1s, border-color .15s;
   }
   .home-tile:active{transform:scale(.97);}
-  .home-tile .icon{font-size:40px;}
+  .home-tile .icon{font-size:30px;}
   .home-tile .label{
     font-family:'Inter',sans-serif;
     font-weight:700;
-    font-size:17px;
+    font-size:16px;
   }
   .home-tile .label-en{
     font-family:'IBM Plex Mono',monospace;
-    font-size:11px;
+    font-size:11.5px;
     color:var(--slate);
     letter-spacing:.5px;
   }
@@ -390,40 +416,40 @@
   }
   .rail{
     grid-area:rail;
-    background:var(--ink); display:flex; flex-direction:column; align-items:center;
+    background:var(--chrome-bg); display:flex; flex-direction:column; align-items:center;
     padding:16px 0; gap:6px; overflow-y:auto;
   }
   #screen-order.layout-top .rail{
-    display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr));
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(112px, 1fr));
     align-items:stretch; align-content:flex-start;
-    padding:14px 20px; gap:10px; max-height:168px; overflow-y:auto; overflow-x:hidden;
+    padding:16px 24px; gap:12px; max-height:280px; overflow-y:auto; overflow-x:hidden;
   }
   .rail-back{
     width:76px; padding:10px 4px; background:transparent; border:none; border-radius:12px;
-    color:var(--amber); font-weight:700; font-size:11px; cursor:pointer; margin-bottom:10px;
+    color:var(--chrome-accent); font-weight:700; font-size:11px; cursor:pointer; margin-bottom:10px;
     flex-shrink:0;
   }
   #screen-order.layout-top .rail-back{width:auto; margin-bottom:0; padding:10px 14px; grid-column:1/-1; justify-self:start;}
   .cat-btn{
     width:76px; padding:12px 4px; background:transparent; border:none; border-radius:12px;
-    color:#98989D; font-family:'Inter',sans-serif; font-weight:600; font-size:11.5px;
+    color:var(--chrome-text-dim); font-family:'Inter',sans-serif; font-weight:600; font-size:11.5px;
     display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer;
     flex-shrink:0;
   }
   #screen-order.layout-top .cat-btn{
-    width:auto; aspect-ratio:1.3; flex-direction:column; justify-content:center;
-    padding:10px 6px; white-space:normal; text-align:center; border-radius:14px;
-    background:rgba(255,255,255,.06); font-size:13px; line-height:1.25;
+    width:auto; aspect-ratio:1.15; flex-direction:column; justify-content:center;
+    padding:12px 8px; white-space:normal; text-align:center; border-radius:16px;
+    background:rgba(255,255,255,.06); font-size:14.5px; line-height:1.3; font-weight:700;
   }
   .cat-btn .dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.55;}
-  .cat-btn.active{background:var(--amber); color:var(--ink);}
+  .cat-btn.active{background:var(--chrome-accent); color:var(--chrome-accent-text);}
   .cat-btn.active .dot{opacity:1;}
 
   .menu{grid-area:menu; background:var(--paper); padding:20px 24px 24px; overflow-y:auto;}
-  .group-tabs{display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:10px; margin-bottom:16px;}
+  .group-tabs{display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:10px; margin-bottom:16px;}
   .group-tab{
-    padding:14px 10px; border-radius:14px; border:1.5px solid var(--slate-line);
-    background:var(--white); color:var(--slate); font-weight:700; font-size:14.5px; cursor:pointer;
+    padding:16px 12px; border-radius:14px; border:1.5px solid var(--slate-line);
+    background:var(--white); color:var(--slate); font-weight:700; font-size:16px; cursor:pointer;
     text-align:center;
   }
   .group-tab.active{background:var(--ink); color:var(--paper); border-color:var(--ink);}
@@ -516,12 +542,12 @@
 
   /* Right-hand vertical rail — Customer Info / Order Type / Change Table / Server / Guest / Note */
   .ticket-siderail{
-    width:66px; flex-shrink:0; background:var(--ink); display:flex; flex-direction:column;
+    width:66px; flex-shrink:0; background:var(--chrome-bg); display:flex; flex-direction:column;
   }
   .sr-btn{
     flex:1; background:transparent; border:none; border-bottom:1px solid rgba(255,255,255,.08);
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
-    cursor:pointer; color:#98989D; padding:4px 2px;
+    cursor:pointer; color:var(--chrome-text-dim); padding:4px 2px;
   }
   .sr-btn:active{background:rgba(255,255,255,.08);}
   .sr-btn .sr-icon{font-size:16px;}
@@ -557,14 +583,14 @@
   /* ================= ADMIN ================= */
   #screen-admin{background:var(--paper); flex-direction:row;}
   .admin-nav{
-    width:200px; background:var(--ink); padding:20px 0; display:flex; flex-direction:column; flex-shrink:0;
+    width:200px; background:var(--chrome-bg); padding:20px 0; display:flex; flex-direction:column; flex-shrink:0;
   }
-  .admin-nav .an-title{color:var(--amber); font-family:'Inter',sans-serif; font-weight:700; font-size:17px; padding:0 20px 18px;}
+  .admin-nav .an-title{color:var(--chrome-accent); font-family:'Inter',sans-serif; font-weight:700; font-size:17px; padding:0 20px 18px;}
   .admin-tab{
-    text-align:left; background:none; border:none; color:#98989D; padding:13px 20px;
+    text-align:left; background:none; border:none; color:var(--chrome-text-dim); padding:13px 20px;
     font-size:13.5px; font-weight:600; cursor:pointer; border-left:3px solid transparent;
   }
-  .admin-tab.active{background:#2C2C2E; color:var(--amber); border-left-color:var(--amber);}
+  .admin-tab.active{background:var(--chrome-bg-2); color:var(--chrome-accent); border-left-color:var(--chrome-accent);}
   .admin-nav .an-exit{margin-top:auto; padding:13px 20px; color:var(--ember); font-weight:700; font-size:13px; background:none; border:none; text-align:left; cursor:pointer;}
   .admin-body{flex:1; padding:26px 34px; overflow-y:auto;}
   .admin-body h2{font-family:'Inter',sans-serif; font-size:24px; margin-bottom:18px;}
@@ -760,36 +786,42 @@
       <button class="logout-btn" onclick="logout()">登出 Logout</button>
     </div>
   </div>
-  <div class="home-grid">
-    <div class="home-tile accent" onclick="goTables()">
-      <div class="icon"><i data-lucide="utensils" class="ico"></i></div>
-      <div class="label i18n-zh" id="txt-tile-dinein-cn">堂食</div>
-      <div class="label-en i18n-en" id="txt-tile-dinein-en">DINE IN</div>
+  <div class="home-body">
+    <div class="caller-id-panel" id="callerIdPanel">
+      <i data-lucide="phone-call" class="ico caller-id-placeholder-icon"></i>
+      <div class="caller-id-placeholder-text">来电显示区<br>Caller ID Area</div>
     </div>
-    <div class="home-tile" onclick="goCustomerForm('to-go')">
-      <div class="icon"><i data-lucide="shopping-bag" class="ico"></i></div>
-      <div class="label i18n-zh" id="txt-tile-togo-cn">外带</div>
-      <div class="label-en i18n-en" id="txt-tile-togo-en">TO GO</div>
-    </div>
-    <div class="home-tile" onclick="goCustomerForm('pickup')">
-      <div class="icon"><i data-lucide="phone" class="ico"></i></div>
-      <div class="label i18n-zh" id="txt-tile-pickup-cn">自取</div>
-      <div class="label-en i18n-en" id="txt-tile-pickup-en">PICK UP</div>
-    </div>
-    <div class="home-tile" onclick="goCustomerForm('delivery')">
-      <div class="icon"><i data-lucide="bike" class="ico"></i></div>
-      <div class="label i18n-zh" id="txt-tile-delivery-cn">外送</div>
-      <div class="label-en i18n-en" id="txt-tile-delivery-en">DELIVERY</div>
-    </div>
-    <div class="home-tile" onclick="goRecall()">
-      <div class="icon"><i data-lucide="folder-open" class="ico"></i></div>
-      <div class="label i18n-zh" id="txt-tile-recall-cn">调出订单</div>
-      <div class="label-en i18n-en" id="txt-tile-recall-en">RECALL</div>
-    </div>
-    <div class="home-tile" onclick="openDrawer()">
-      <div class="icon"><i data-lucide="archive" class="ico"></i></div>
-      <div class="label i18n-zh" id="txt-tile-drawer-cn">打开钱箱</div>
-      <div class="label-en i18n-en" id="txt-tile-drawer-en">OPEN DRAWER</div>
+    <div class="home-grid">
+      <div class="home-tile accent" onclick="goTables()">
+        <div class="icon"><i data-lucide="utensils" class="ico"></i></div>
+        <div class="label i18n-zh" id="txt-tile-dinein-cn">堂食</div>
+        <div class="label-en i18n-en" id="txt-tile-dinein-en">DINE IN</div>
+      </div>
+      <div class="home-tile" onclick="goCustomerForm('to-go')">
+        <div class="icon"><i data-lucide="shopping-bag" class="ico"></i></div>
+        <div class="label i18n-zh" id="txt-tile-togo-cn">外带</div>
+        <div class="label-en i18n-en" id="txt-tile-togo-en">TO GO</div>
+      </div>
+      <div class="home-tile" onclick="goCustomerForm('pickup')">
+        <div class="icon"><i data-lucide="phone" class="ico"></i></div>
+        <div class="label i18n-zh" id="txt-tile-pickup-cn">自取</div>
+        <div class="label-en i18n-en" id="txt-tile-pickup-en">PICK UP</div>
+      </div>
+      <div class="home-tile" onclick="goCustomerForm('delivery')">
+        <div class="icon"><i data-lucide="bike" class="ico"></i></div>
+        <div class="label i18n-zh" id="txt-tile-delivery-cn">外送</div>
+        <div class="label-en i18n-en" id="txt-tile-delivery-en">DELIVERY</div>
+      </div>
+      <div class="home-tile" onclick="goRecall()">
+        <div class="icon"><i data-lucide="folder-open" class="ico"></i></div>
+        <div class="label i18n-zh" id="txt-tile-recall-cn">调出订单</div>
+        <div class="label-en i18n-en" id="txt-tile-recall-en">RECALL</div>
+      </div>
+      <div class="home-tile" onclick="openDrawer()">
+        <div class="icon"><i data-lucide="archive" class="ico"></i></div>
+        <div class="label i18n-zh" id="txt-tile-drawer-cn">打开钱箱</div>
+        <div class="label-en i18n-en" id="txt-tile-drawer-en">OPEN DRAWER</div>
+      </div>
     </div>
   </div>
 </div>
@@ -807,27 +839,27 @@
 <div class="screen" id="screen-customer">
   <div class="subpage-header" style="width:100%;">
     <button class="back-btn" onclick="goHome()">← 返回 Back</button>
-    <h1 id="customerFormTitle">顾客信息 Customer Info</h1>
+    <h1 id="customerFormTitle"><span class="i18n-zh">顾客信息</span> <span class="i18n-en">Customer Info</span></h1>
   </div>
   <div class="form-wrap">
-    <h2 id="customerFormSubtitle">填写顾客信息</h2>
+    <h2 id="customerFormSubtitle"><span class="i18n-zh">填写顾客信息</span><span class="i18n-en">Enter Customer Info</span></h2>
     <div class="field">
-      <label>顾客姓名 Name</label>
+      <label><span class="i18n-zh">顾客姓名</span> <span class="i18n-en">Name</span></label>
       <input type="text" id="custName" placeholder="e.g. John Smith">
     </div>
     <div class="field">
-      <label>电话号码 Phone</label>
+      <label><span class="i18n-zh">电话号码</span> <span class="i18n-en">Phone</span></label>
       <input type="tel" id="custPhone" placeholder="e.g. (555) 123-4567" oninput="lookupCustomer(this.value)">
     </div>
     <div class="customer-hint" id="customerHint">
-      <div class="ch-text"><i data-lucide="user" class="ico"></i> 老顾客 <b id="chName"></b> · <span id="chSub"></span></div>
-      <button onclick="applyCustomerHint()">使用 Use</button>
+      <div class="ch-text"><i data-lucide="user" class="ico"></i> <span class="i18n-zh">老顾客</span><span class="i18n-en">Returning customer</span> <b id="chName"></b> · <span id="chSub"></span></div>
+      <button onclick="applyCustomerHint()"><span class="i18n-zh">使用</span><span class="i18n-en">Use</span></button>
     </div>
     <div class="field" id="addressField" style="display:none;">
-      <label>送餐地址 Delivery Address</label>
+      <label><span class="i18n-zh">送餐地址</span> <span class="i18n-en">Delivery Address</span></label>
       <input type="text" id="custAddress" placeholder="e.g. 123 Main St, Apt 4B">
     </div>
-    <button class="form-submit" onclick="startOrderFromForm()">开始点餐 Start Order →</button>
+    <button class="form-submit" onclick="startOrderFromForm()"><span class="i18n-zh">开始点餐</span> <span class="i18n-en">Start Order</span> →</button>
   </div>
 </div>
 
@@ -894,12 +926,12 @@
 <div class="screen" id="screen-admin">
   <div class="admin-nav">
     <div class="an-title"><i data-lucide="settings" class="ico"></i> 管理后台</div>
-    <button class="admin-tab" data-tab="menu" onclick="switchAdminTab('menu')"><i data-lucide="soup" class="ico"></i> 菜单管理 Menu</button>
-    <button class="admin-tab" data-tab="reports" onclick="switchAdminTab('reports')"><i data-lucide="bar-chart-3" class="ico"></i> 销售报表 Reports</button>
-    <button class="admin-tab" data-tab="staff" onclick="switchAdminTab('staff')"><i data-lucide="user" class="ico"></i> 员工账号 Staff</button>
-    <button class="admin-tab" data-tab="history" onclick="switchAdminTab('history')"><i data-lucide="receipt" class="ico"></i> 历史订单 Orders</button>
-    <button class="admin-tab" data-tab="text" onclick="switchAdminTab('text')"><i data-lucide="type" class="ico"></i> 文案管理 Text</button>
-    <button class="admin-tab" data-tab="settings" onclick="switchAdminTab('settings')"><i data-lucide="printer" class="ico"></i> 打印/刷卡设置</button>
+    <button class="admin-tab" data-tab="menu" onclick="switchAdminTab('menu')"><i data-lucide="soup" class="ico"></i> <span class="i18n-zh">菜单管理</span> <span class="i18n-en">Menu</span></button>
+    <button class="admin-tab" data-tab="reports" onclick="switchAdminTab('reports')"><i data-lucide="bar-chart-3" class="ico"></i> <span class="i18n-zh">销售报表</span> <span class="i18n-en">Reports</span></button>
+    <button class="admin-tab" data-tab="staff" onclick="switchAdminTab('staff')"><i data-lucide="user" class="ico"></i> <span class="i18n-zh">员工账号</span> <span class="i18n-en">Staff</span></button>
+    <button class="admin-tab" data-tab="history" onclick="switchAdminTab('history')"><i data-lucide="receipt" class="ico"></i> <span class="i18n-zh">历史订单</span> <span class="i18n-en">Orders</span></button>
+    <button class="admin-tab" data-tab="text" onclick="switchAdminTab('text')"><i data-lucide="type" class="ico"></i> <span class="i18n-zh">文案管理</span> <span class="i18n-en">Text</span></button>
+    <button class="admin-tab" data-tab="settings" onclick="switchAdminTab('settings')"><i data-lucide="printer" class="ico"></i> <span class="i18n-zh">打印/刷卡设置</span><span class="i18n-en">Hardware</span></button>
     <button class="an-exit" onclick="goHome()">← 退出后台</button>
   </div>
   <div class="admin-body" id="adminBody"></div>
@@ -1014,7 +1046,10 @@ let hardwareSettings = {
 };
 
 /* Order screen layout — switchable in Admin ▸ Settings. */
-let appSettings = { orderLayout: "top", uiLang: "both" }; // orderLayout: 'top'|'right' · uiLang: 'zh'|'en'|'both'
+let appSettings = { orderLayout: "top", uiLang: "both", theme: "black" }; // orderLayout: 'top'|'right' · uiLang: 'zh'|'en'|'both' · theme: 'black'|'orange'
+function applyTheme(){
+  document.body.classList.toggle('theme-orange', appSettings.theme==='orange');
+}
 function applyOrderLayout(){
   const el = document.getElementById('screen-order');
   el.classList.remove('layout-top','layout-right');
@@ -1303,9 +1338,14 @@ function tickTableDurations(){
 let pendingOrderType = null;
 function goCustomerForm(type){
   pendingOrderType = type;
-  const titles = {'to-go':'外带 To Go','pickup':'自取 Pick Up','delivery':'外送 Delivery'};
-  document.getElementById('customerFormTitle').textContent = titles[type];
-  document.getElementById('customerFormSubtitle').textContent = '填写顾客信息 · ' + titles[type];
+  const titles = {
+    'to-go':{zh:'外带', en:'To Go'},
+    'pickup':{zh:'自取', en:'Pick Up'},
+    'delivery':{zh:'外送', en:'Delivery'}
+  };
+  const t = titles[type];
+  document.getElementById('customerFormTitle').innerHTML = `<span class="i18n-zh">${t.zh}</span> <span class="i18n-en">${t.en}</span>`;
+  document.getElementById('customerFormSubtitle').innerHTML = `<span class="i18n-zh">填写顾客信息 · ${t.zh}</span><span class="i18n-en">Enter Customer Info · ${t.en}</span>`;
   document.getElementById('addressField').style.display = type==='delivery' ? 'block' : 'none';
   document.getElementById('custName').value='';
   document.getElementById('custPhone').value='';
@@ -2368,7 +2408,15 @@ function renderAdminText(body){
     ['页面标题 Screen Titles', ['txt-title-tables-zh','txt-title-tables-en','txt-title-recall-zh','txt-title-recall-en']],
   ];
   const langLabels = [['both','中英双语 Both'],['zh','仅中文 Chinese Only'],['en','仅英文 English Only']];
+  const themeLabels = [['black','黑色主题 Black'],['orange','橙色主题 Orange']];
   let html = `<h2>文案管理 Text Management</h2>
+    <div class="admin-section">
+      <h3>外观主题 Appearance Theme</h3>
+      <p style="color:var(--slate); font-size:12.5px; margin-bottom:10px;">切换深色面板(登录页、点餐页类目栏、竖排功能栏、后台导航)的背景颜色。</p>
+      <div class="admin-add-form">
+        ${themeLabels.map(([k,l])=>`<span class="rf-chip ${appSettings.theme===k?'active':''}" style="cursor:pointer;" onclick="setTheme('${k}')">${l}</span>`).join('')}
+      </div>
+    </div>
     <div class="admin-section">
       <h3>界面语言 Language Mode</h3>
       <p style="color:var(--slate); font-size:12.5px; margin-bottom:10px;">目前覆盖登录页、首页按钮、桌位/调出订单标题、点餐页底部与右侧按钮这几处，其余文字(菜单、后台内部)还是固定显示，之后会逐步扩大范围。</p>
@@ -2395,6 +2443,13 @@ function setUiLang(mode){
   applyUiLang();
   db.from('settings').upsert({key:'app', value: appSettings})
     .then(({error})=>{ if(error) console.error('setUiLang error', error); });
+  renderAdminText(document.getElementById('adminBody'));
+}
+function setTheme(mode){
+  appSettings.theme = mode;
+  applyTheme();
+  db.from('settings').upsert({key:'app', value: appSettings})
+    .then(({error})=>{ if(error) console.error('setTheme error', error); });
   renderAdminText(document.getElementById('adminBody'));
 }
 function updateUiText(id, val){
@@ -2800,6 +2855,7 @@ async function bootstrapApp(){
     });
     applyUiText();
     applyUiLang();
+    applyTheme();
     await loadCustomersFromDB();
 
     pinLabel.textContent = '请输入密码 Enter your PIN';
